@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculateur de densité de l’air — données Météo‑France (modèles AROME/ARPEGE)</title>
+  <meta name="description" content="Petite application web qui calcule la densité de l’air à partir des données météo du jour (température, humidité, pression) fournies par l’API Open‑Meteo Météo‑France (AROME/ARPEGE)." />
+  <link rel="preconnect" href="https://api.open-meteo.com"/>
+  <link rel="preconnect" href="https://geocoding-api.open-meteo.com"/>
+  <style>
+    :root { --bg:#0b1120; --card:#111827; --muted:#9ca3af; --accent:#60a5fa; --ok:#10b981; --warn:#f59e0b; --err:#ef4444; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;background:linear-gradient(180deg,#0b1120 0%,#0f172a 100%);color:#e5e7eb}
+    header{padding:24px 16px;text-align:center}
+    h1{margin:0 0 8px;font-weight:700;font-size:clamp(22px,2.2vw,28px)}
+    p.subtitle{margin:0;color:var(--muted)}
+    .container{max-width:980px;margin:16px auto;padding:0 16px;}
+    .card{background:rgba(17,24,39,.8);backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:18px}
+    .grid{display:grid;gap:14px}
+    @media(min-width:880px){.grid{grid-template-columns:1fr 1fr}}
+    label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+    input{width:100%;padding:12px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0b1220;color:#e5e7eb}
+    button{appearance:none;border:0;border-radius:12px;padding:12px 14px;font-weight:600;cursor:pointer}
+    .btn{background:var(--accent);color:#061227}
+    .btn.secondary{background:#1f2937;color:#e5e7eb}
+    .btn.ghost{background:transparent;color:#93c5fd;border:1px dashed #1f3a5f}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row > *{flex:1}
+    .kpi{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:baseline;padding:14px;border-radius:12px;background:#0b1220;border:1px solid rgba(255,255,255,.06)}
+    .kpi .label{color:var(--muted);font-size:13px}
+    .kpi .value{font-size:clamp(20px,2.4vw,28px);font-weight:800}
+    .foot{font-size:13px;color:var(--muted)}
+    .badge{font-size:12px;color:#93c5fd}
+    .small{font-size:12px;color:#9ca3af}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .hint{font-size:12px;color:#a7f3d0}
+    .err{color:var(--err)}
+    .ok{color:var(--ok)}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:#0b1220;border:1px solid rgba(255,255,255,.08)}
+    footer{max-width:980px;margin:24px auto 40px;padding:0 16px;color:var(--muted);font-size:12px}
+    a{color:#93c5fd}
+    .gaugeWrap{margin-top:14px;padding:16px;border-radius:16px;background:#0b1220;border:1px solid rgba(255,255,255,.06)}
+    .gaugeHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .gaugeTitle{font-size:14px;color:var(--muted)}
+    .gaugeRange{font-size:12px;color:#93c5fd}
+    .gaugeSVG{max-width:180px;height:auto;display:block;margin:auto}
+    .guidance{margin-top:8px;font-size:13px;color:#cbd5e1;text-align:center}
+    .tests{margin-top:16px;padding:12px;border-radius:12px;background:#0b1220;border:1px solid rgba(255,255,255,.06)}
+    .tests pre{white-space:pre-wrap;background:#0b1220;border:1px solid rgba(255,255,255,.06);padding:10px;border-radius:10px}
+    /* City search */
+    .searchRow{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:12px}
+    @media(max-width:640px){.searchRow{grid-template-columns:1fr}}
+    .results{margin-top:8px;display:grid;gap:6px}
+    .cityItem{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:#0b1220;border:1px solid rgba(255,255,255,.08);cursor:pointer;color:#ffffff}
+    .cityItem:hover{border-color:#1f3a5f}
+    .cityMeta{font-size:12px;color:#cbd5e1}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Calculateur de densité de l’air</h1>
+    <p class="subtitle">Données du <strong>jour</strong> via l’API <span class="badge">Open‑Meteo · Météo‑France (AROME/ARPEGE)</span></p>
+  </header>
+
+  <main class="container">
+    <section class="card" aria-labelledby="loc">
+      <h2 id="loc" style="margin:0 0 10px">Localisation</h2>
+
+      <div class="searchRow">
+        <div>
+          <label for="city">Rechercher une ville</label>
+          <input id="city" type="text" placeholder="Ex. Paris, Lyon, Marseille… (base Open‑Meteo Geocoding)" />
+        </div>
+        <div>
+          <label for="lat">Latitude</label>
+          <input id="lat" type="number" step="0.0001" placeholder="48.8566"/>
+        </div>
+        <div>
+          <label for="lon">Longitude</label>
+          <input id="lon" type="number" step="0.0001" placeholder="2.3522"/>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button id="searchCity" class="btn">🔎 Chercher la ville</button>
+        <button id="geolocate" class="btn">📍 Utiliser ma position</button>
+        <button id="load" class="btn secondary">🔄 Charger la météo du jour</button>
+      </div>
+      <p id="status" class="small" style="margin-top:8px"></p>
+      <div id="cityResults" class="results" aria-live="polite"></div>
+
+      <div class="grid" style="margin-top:16px">
+        <div class="kpi"><div class="label">Température&nbsp;T (2 m)</div><div class="value" id="kT">—</div></div>
+        <div class="kpi"><div class="label">Humidité relative&nbsp;RH</div><div class="value" id="kRH">—</div></div>
+        <div class="kpi"><div class="label">Pression station&nbsp;p</div><div class="value" id="kP">—</div></div>
+        <div class="kpi"><div class="label">Densité de l’air&nbsp;ρ</div><div class="value" id="kRho">—</div></div>
+        <div class="kpi"><div class="label">Rapport ρ / ρ₀ (1.225 kg·m⁻³)</div><div class="value" id="kRatio">—</div></div>
+        <div class="kpi"><div class="label">Horodatage</div><div class="value small" id="kTs">—</div></div>
+      </div>
+
+      <div class="gaugeWrap">
+        <div class="gaugeHeader">
+          <div class="gaugeTitle">Jauge de densité (air pauvre → riche)</div>
+          <div class="gaugeRange">Plage indicative : 0.90 → 1.08 (ρ/ρ₀)</div>
+        </div>
+        <div id="gauge"><!-- SVG injectée par JS --></div>
+        <div id="guidance" class="guidance">—</div>
+      </div>
+
+      <p class="foot" style="margin-top:10px">ρ₀ = 1.225 kg·m⁻³ (ISA niveau mer, 15 °C). Calcul ρ sur air humide : pression sèche + vapeur d’eau.</p>
+    </section>
+
+    <section class="card" aria-labelledby="manu" style="margin-top:16px">
+      <h2 id="manu" style="margin:0 0 10px">Saisie manuelle (optionnelle)</h2>
+      <div class="grid">
+        <div>
+          <label for="tManual">Température (°C)</label>
+          <input id="tManual" type="number" step="0.1" placeholder="ex. 18.5" />
+        </div>
+        <div>
+          <label for="rhManual">Humidité relative (%)</label>
+          <input id="rhManual" type="number" step="1" placeholder="ex. 65" />
+        </div>
+        <div>
+          <label for="pManual">Pression station (hPa)</label>
+          <input id="pManual" type="number" step="0.1" placeholder="ex. 1010.5" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button id="applyManual" class="btn">🧮 Calculer avec mes valeurs</button>
+        <span class="hint pill">Astuce : si vous avez QNH (mer) + altitude, convertissez‑le en pression station avec p≈QNH·e^(−z/8434).</span>
+      </div>
+      <p id="manualMsg" class="small" style="margin-top:8px"></p>
+    </section>
+
+    <section class="card" aria-labelledby="how" style="margin-top:16px">
+      <h2 id="how" style="margin:0 0 10px">Méthode de calcul</h2>
+      <p class="small">On utilise la formule de Magnus‑Tetens pour la pression de vapeur saturante <span class="mono">eₛ(T)</span> et l’équation des gaz pour un mélange air sec + vapeur d’eau :</p>
+      <pre class="small" style="white-space:pre-wrap;background:#0b1220;border:1px solid rgba(255,255,255,.06);padding:10px;border-radius:10px;">
+1) eₛ (hPa) = 6.112 · exp(17.62·T°C / (243.12 + T°C))
+2) e (hPa)  = RH · eₛ / 100
+3) p_d (hPa)= p − e
+4) ρ (kg·m⁻³) = ((p_d·100)·M_d + (e·100)·M_v) / (R · (T°C+273.15))
+   avec R = 8.314462618 J·mol⁻¹·K⁻¹, M_d = 0.0289652 kg·mol⁻¹, M_v = 0.018016 kg·mol⁻¹
+      </pre>
+      <p class="small">API météo appelée : <span class="mono">/v1/meteofrance?latitude=..&longitude=..&current=temperature_2m,relative_humidity_2m,surface_pressure&timezone=auto</span> (Open‑Meteo, modèles Météo‑France AROME/ARPEGE).</p>
+    </section>
+
+    <section class="card tests" aria-labelledby="tests" style="margin-top:16px">
+      <h2 id="tests" style="margin:0 0 10px">Tests intégrés</h2>
+      <p class="small">Ces tests valident la formule de densité :</p>
+      <div class="row" style="margin-top:8px">
+        <button id="runTests" class="btn secondary">▶️ Lancer les tests</button>
+      </div>
+      <pre id="testsOut" class="small" style="margin-top:10px">(aucun test exécuté)</pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>Source météo : Open‑Meteo Météo‑France (AROME/ARPEGE). Données de modèles, pas une station ponctuelle. Pour des observations station, utiliser par ex. Infoclimat/StatIC (API) ou les flux SYNOP officiels.
+    </p>
+  </footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (v, u="") => (v==null || Number.isNaN(+v)) ? "—" : `${(+v).toFixed(2)}${u}`;
+
+function computeDensity({ T_C, RH, p_hPa }){
+  if([T_C, RH, p_hPa].some(v=>v==null || isNaN(v))) return { rho:null, e:null, pd:null };
+  const T_K = T_C + 273.15;
+  const es = 6.112 * Math.exp(17.62 * T_C / (243.12 + T_C));
+  const e  = (RH/100) * es;               // hPa
+  const pd = p_hPa - e;                   // hPa
+  const R  = 8.314462618;                 // J/mol/K
+  const Md = 0.0289652;                   // kg/mol (air sec)
+  const Mv = 0.018016;                    // kg/mol (vapeur)
+  const rho = ((pd*100)*Md + (e*100)*Mv) / (R*T_K);
+  return { rho, e, pd, es, T_K };
+}
+
+function updateKPIs(state){
+  const { T_C, RH, p_hPa, ts } = state;
+  const { rho } = computeDensity({ T_C, RH, p_hPa });
+  $("kT").textContent   = fmt(T_C, " °C");
+  $("kRH").textContent  = fmt(RH,  " %");
+  $("kP").textContent   = fmt(p_hPa, " hPa");
+  $("kRho").textContent = fmt(rho, " kg/m³");
+  const ratio = rho ? (rho/1.225) : null;
+  $("kRatio").textContent = (ratio ? ratio.toFixed(3) : "—");
+  $("kTs").textContent  = ts || "—";
+  renderGauge(ratio);
+  renderGuidance(ratio);
+}
+
+async function loadFromAPI(lat, lon){
+  const url = new URL("https://api.open-meteo.com/v1/meteofrance");
+  url.searchParams.set("latitude", lat);
+  url.searchParams.set("longitude", lon);
+  url.searchParams.set("timezone", "auto");
+  url.searchParams.set("current", ["temperature_2m","relative_humidity_2m","surface_pressure"].join(","));
+  $("status").textContent = "Récupération des données en cours…";
+  try{
+    const resp = await fetch(url.toString());
+    if(!resp.ok) throw new Error("HTTP " + resp.status);
+    const data = await resp.json();
+    const cur = data.current;
+    if(!cur) throw new Error("Réponse inattendue de l’API");
+    const T_C   = cur.temperature_2m;
+    const RH    = cur.relative_humidity_2m;
+    const p_hPa = cur.surface_pressure; // hPa
+    const ts    = cur.time;
+    updateKPIs({ T_C, RH, p_hPa, ts });
+    $("status").innerHTML = `✅ Données chargées pour <span class="mono">${(+lat).toFixed(4)}, ${(+lon).toFixed(4)}</span>`;
+  }catch(err){
+    console.error(err);
+    $("status").innerHTML = `<span class="err">Échec du chargement : ${err.message}</span>`;
+  }
+}
+
+function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
+
+function renderGauge(ratio){
+  const el = $("gauge");
+  if(!el){return;}
+  if(ratio==null || isNaN(ratio)){ el.innerHTML = '<div class="small">Jauge indisponible : calculez d\'abord ρ.</div>'; return; }
+  const rMin=0.90, rMax=1.08;
+  const t = (clamp(ratio,rMin,rMax)-rMin)/(rMax-rMin);
+  const angle = -90 + 180*t;
+  const size = 200, cx = size/2, cy = size/2, R = 90;
+  const start = polar(cx,cy,R,-90);
+  const end   = polar(cx,cy,R,90);
+  const tip   = polar(cx,cy,R-8,angle);
+  const arcLen = Math.PI * R;
+  const svg = `
+  <svg class="gaugeSVG" viewBox="0 0 ${size} ${size}" aria-label="Jauge densité">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#ef4444"/>
+        <stop offset="50%" stop-color="#f59e0b"/>
+        <stop offset="100%" stop-color="#10b981"/>
+      </linearGradient>
+    </defs>
+    <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="12"/>
+    <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="url(#g)" stroke-width="12" stroke-dasharray="${Math.max(1, arcLen)}" stroke-dashoffset="${(1-t)*arcLen}"/>
+    <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#e5e7eb"/>
+    <text x="${cx}" y="${cy+18}" text-anchor="middle" font-size="11" fill="#9ca3af">${ratio.toFixed(3)} ρ/ρ₀</text>
+    <text x="${cx- R + 2}" y="${cy+8}" font-size="10" fill="#9ca3af">0.90</text>
+    <text x="${cx+ R - 22}" y="${cy+8}" font-size="10" fill="#9ca3af">1.08</text>
+  </svg>`;
+  el.innerHTML = svg;
+}
+
+function polar(cx,cy,r,aDeg){ const a=aDeg*Math.PI/180; return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a) }; }
+
+function renderGuidance(ratio){
+  const el=$("guidance"); if(!el) return;
+  if(ratio==null || isNaN(ratio)){ el.textContent='—'; return; }
+  let msg, tone;
+  if(ratio < 0.93){ msg = "Air très peu dense : effort aérodynamique légèrement réduit (journée chaude/altitude)."; tone='ok'; }
+  else if(ratio < 0.98){ msg = "Air moins dense que la normale : traînée un peu plus faible, moteur un peu moins coupleux."; tone='ok'; }
+  else if(ratio <= 1.03){ msg = "Autour des conditions standard ISA : densité moyenne."; tone=''; }
+  else if(ratio <= 1.08){ msg = "Air plutôt dense : traînée sensible, casque et buste davantage sollicités."; tone='warn'; }
+  else { msg = "Air très dense : forte traînée, ressenti au vent accru (froid/haute pression)."; tone='err'; }
+  el.innerHTML = `<span class="${tone}">${msg}</span>`;
+}
+
+// --- Recherche de ville via Open‑Meteo Geocoding ---
+async function searchCity(){
+  const q = (($("city").value||"").trim());
+  const cont = $("cityResults");
+  cont.innerHTML = "";
+  if(!q){ $("status").textContent = "Saisissez un nom de ville."; return; }
+  $("status").textContent = "Recherche de la ville…";
+  try{
+    const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
+    url.searchParams.set("name", q);
+    url.searchParams.set("count", 8);
+    url.searchParams.set("language", "fr");
+    url.searchParams.set("format", "json");
+    const resp = await fetch(url.toString());
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data = await resp.json();
+    const results = data.results || [];
+    if(results.length===0){ $("status").innerHTML = '<span class="err">Aucun résultat.</span>'; return; }
+    $("status").textContent = `Résultats : ${results.length}`;
+    results.forEach((r)=>{
+      const btn = document.createElement("button");
+      btn.className = "cityItem";
+      const admin = r.admin1 ? `, ${r.admin1}` : "";
+      btn.innerHTML = `<span>${r.name}${admin} — ${r.country_code}</span><span class="cityMeta mono">${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}</span>`;
+      btn.addEventListener("click",()=>{
+        $("lat").value = r.latitude.toFixed(4);
+        $("lon").value = r.longitude.toFixed(4);
+        cont.innerHTML = "";
+        loadFromAPI(r.latitude, r.longitude);
+      });
+      cont.appendChild(btn);
+    });
+  }catch(err){
+    console.error(err);
+    $("status").innerHTML = `<span class=err>Erreur recherche ville : ${err.message}</span>`;
+  }
+}
+
+// Events
+$("searchCity").addEventListener("click", searchCity);
+$("city").addEventListener("keydown", (e)=>{ if(e.key==="Enter") searchCity(); });
+
+$("load").addEventListener("click", ()=>{
+  const lat = parseFloat($("lat").value);
+  const lon = parseFloat($("lon").value);
+  if(isNaN(lat)||isNaN(lon)){ $("status").innerHTML = '<span class="err">Veuillez renseigner latitude et longitude.</span>'; return; }
+  loadFromAPI(lat, lon);
+});
+
+$("geolocate").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ $("status").innerHTML = '<span class="err">Géolocalisation non supportée.</span>'; return; }
+  $("status").textContent = "Localisation en cours…";
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const { latitude:lat, longitude:lon } = pos.coords;
+    $("lat").value = lat.toFixed(4);
+    $("lon").value = lon.toFixed(4);
+    loadFromAPI(lat, lon);
+  }, err=>{
+    $("status").innerHTML = `<span class="err">Géolocalisation refusée : ${err.message}</span>`;
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:60000 });
+});
+
+$("applyManual").addEventListener("click", ()=>{
+  const T_C   = parseFloat($("tManual").value);
+  const RH    = parseFloat($("rhManual").value);
+  const p_hPa = parseFloat($("pManual").value);
+  const res = computeDensity({ T_C, RH, p_hPa });
+  if(!res || res.rho==null){
+    $("manualMsg").innerHTML = '<span class="err">Renseignez T (°C), RH (%) et p (hPa).</span>';
+    return;
+  }
+  updateKPIs({ T_C, RH, p_hPa, ts: "(manuel)" });
+  $("manualMsg").innerHTML = '<span class="ok">Calcul effectué avec vos valeurs.</span>';
+});
+
+// ---- Tests intégrés ----
+function approxEqual(a,b,eps=1e-3){ return Math.abs(a-b) <= eps; }
+function runTests(){
+  const lines = [];
+  let r = computeDensity({ T_C:15, RH:0, p_hPa:1013.25 }).rho; 
+  lines.push(`Test 1 (ISA SL sec): ρ=${r?.toFixed(6)} → ${approxEqual(r,1.225012)?'OK':'FAIL'}`);
+  r = computeDensity({ T_C:30, RH:0, p_hPa:1000 }).rho;
+  lines.push(`Test 2 (30°C sec, 1000 hPa): ρ=${r?.toFixed(6)} → ${approxEqual(r,1.149171,2e-3)?'OK':'FAIL'}`);
+  const rHumid = computeDensity({ T_C:30, RH:100, p_hPa:1000 }).rho;
+  lines.push(`Test 3 (30°C saturé): ρ=${rHumid?.toFixed(6)} < ρ_sec? → ${(rHumid<r)?'OK':'FAIL'}`);
+  const rNull = computeDensity({ T_C:null, RH:50, p_hPa:1000 }).rho;
+  lines.push(`Test 4 (entrée invalide): ρ=${rNull} → ${(rNull==null)?'OK':'FAIL'}`);
+  $("testsOut").textContent = lines.join("\n");
+}
+$("runTests").addEventListener("click", runTests);
+</script>
+</body>
+</html>
