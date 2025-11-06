@@ -46,7 +46,7 @@
 <body>
 <header>
   <div class="header-brand">
-    <!-- remplace ce src par le nom réel de ton fichier si besoin -->
+    <!-- mets bien ridescore-logo.png à côté de ce fichier -->
     <img src="ridescore-logo.png" alt="RideScore, météo moto">
     <div>
       <h1>RideScore</h1>
@@ -166,6 +166,7 @@
   const polar=(cx,cy,r,aDeg)=>{const a=aDeg*Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}};
   const todayISO=()=>{const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10)};
 
+  // === physique
   function rhoFromTRP(T_C,RH,p_hPa){
     if([T_C,RH,p_hPa].some(v=>v==null||isNaN(v))) return null;
     const T_K=T_C+273.15;
@@ -176,7 +177,7 @@
     return ((pd*100)*Md + (e*100)*Mv)/(R*T_K);
   }
 
-  // scoring
+  // === scoring (inchangé)
   const scoreFromTemperature=T=> (T==null||isNaN(T))?12: (T>=10&&T<=25?25:((T>=5&&T<10)||(T>25&&T<=30)?15:5));
   const scoreFromRain=p=> (p==null||isNaN(p))?12:(p===0?15:(p<1?8:0));
   const scoreFromWind=(w,g)=>{const v=Math.max(w||0,g||0);return v<25?20:(v<50?10:0)};
@@ -191,6 +192,7 @@
     )));
   }
 
+  // === gauges
   function gaugeHalfGradient(elId, value, vMin, vMax, stops){
     const el=$(elId); if(!el) return;
     if(value==null||isNaN(value)){el.innerHTML='<div class="guidance">—</div>';return}
@@ -209,11 +211,12 @@
     </svg>`;
   }
 
+  // === utils calcul jour
   function avgOnIdx(arr, idxs){ if(!arr) return null; let s=0,c=0; for(const i of idxs){ const v=arr[i]; if(v!=null){s+=v;c++;}} return c? s/c : null; }
   function avg2(a,b){ if(a==null||isNaN(a)) return b; if(b==null||isNaN(b)) return a; return (a+b)/2; }
 
   function computeDaySummaryFromHourly(H, dateISO){
-    const times=H.time||[]; const idx=[];
+    const times=H.time||[]; const idx=[]; 
     for(let i=0;i<times.length;i++){ if(String(times[i]).startsWith(dateISO)) idx.push(i); }
     if(idx.length===0) return null;
     let maxWind=0,maxGust=0,maxPrec=0,minTemp=Infinity,minVis=Infinity,maxRH=0;
@@ -263,6 +266,7 @@
     cont.innerHTML=lamps.map(l=>`<div class="lamp"><span class="led ${l.on?('on '+l.tone):''}"></span><span>${l.icon} ${l.label}</span></div>`).join('');
   }
 
+  // === API
   async function fetchDay(lat,lon,dateISO){
     const url=new URL('https://api.open-meteo.com/v1/meteofrance');
     url.searchParams.set('latitude',lat);
@@ -279,6 +283,7 @@
     return r.json();
   }
 
+  // === charge 1 ville/date
   async function loadCityDate(lat,lon,dateISO){
     const st=$("status"); if(st) st.textContent='Chargement…';
     try{
@@ -294,8 +299,19 @@
       $("kRho").textContent=fmt(rhoMean," kg/m³");
       $("kRatio").textContent=(ratioMean?ratioMean.toFixed(3):'—');
       $("kTs").textContent=dateISO;
-      gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [ [0,'#10b981'], [50,'#f6b234'], [100,'#ef4444'] ]);
-      gaugeHalfGradient('gScore', scoreDay, 0, 100, [ [0,'#ef4444'], [50,'#f6b234'], [100,'#10b981'] ]);
+
+      // dégradés corrigés
+      gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [
+        [0, '#10b981'],  // vert (air léger)
+        [50, '#f6b234'], // orange
+        [100, '#ef4444'] // rouge (air dense)
+      ]);
+      gaugeHalfGradient('gScore', scoreDay, 0, 100, [
+        [0, '#ef4444'],  // rouge (défavorable)
+        [50, '#f6b234'], // orange (médiocre)
+        [100, '#10b981'] // vert (favorable)
+      ]);
+
       $("gScoreTxt").textContent = (scoreDay>=80? '🟢 Favorables' : (scoreDay>=50? '🟠 Mitigées' : '🔴 Défavorables'));
       $("gRhoTxt").textContent = (ratioMean==null? '—' : (ratioMean<0.99? 'Air plutôt léger (vert)' : (ratioMean<=1.03? 'Densité moyenne (jaune/orange)' : 'Air riche (rouge)')));
       $("dayMsg").textContent = (events.length? 'Phénomènes attendus : '+events.join(', ') : 'Aucun phénomène notable.');
@@ -307,7 +323,7 @@
     }
   }
 
-  // autocomplete
+  // === autocomplete
   function debounce(fn,ms){let t; return(...args)=>{clearTimeout(t); t=setTimeout(()=>fn(...args),ms);} }
   let A=null,B=null;
   const acSingle = debounce(()=> searchCityInto('city','results', v=>{
@@ -343,7 +359,7 @@
     }
   }
 
-  // onglets
+  // === onglets
   let MODE='single';
   $("tabSingle").addEventListener('click', ()=>{
     MODE='single';
@@ -360,6 +376,7 @@
     $("tabSingle").style.background=''; $("tabSingle").style.color='';
   });
 
+  // === évaluation itinéraire (mêmes dégradés corrigés)
   async function evaluateRoute(date){
     const info=$("statusRoute");
     if(!A||!B){ if(info) info.innerHTML='<span style="color:#ef4444">Choisissez départ et arrivée.</span>'; return; }
@@ -372,8 +389,18 @@
       const ratioAvg = rhoAvg? rhoAvg/1.225 : null;
       const scoreAvg = avg2(SA.scoreDay,SB.scoreDay);
 
-      gaugeHalfGradient('gRho', ratioAvg, 0.90, 1.08, [ [0,'#10b981'], [50,'#f6b234'], [100,'#ef4444'] ]);
-      gaugeHalfGradient('gScore', scoreAvg, 0, 100, [ [0,'#ef4444'], [50,'#f6b234'], [100,'#10b981'] ]);
+      // dégradés identiques
+      gaugeHalfGradient('gRho', ratioAvg, 0.90, 1.08, [
+        [0, '#10b981'],
+        [50, '#f6b234'],
+        [100, '#ef4444']
+      ]);
+      gaugeHalfGradient('gScore', scoreAvg, 0, 100, [
+        [0, '#ef4444'],
+        [50, '#f6b234'],
+        [100, '#10b981']
+      ]);
+
       $("gScoreTxt").textContent = (scoreAvg>=80? '🟢 Favorables (itinéraire)' : (scoreAvg>=50? '🟠 Mitigées (itinéraire)' : '🔴 Défavorables (itinéraire)'));
       $("gRhoTxt").textContent = (ratioAvg==null? '—' : `ρ/ρ₀ moyen itinéraire : ${ratioAvg.toFixed(3)}`);
 
@@ -446,10 +473,11 @@
     }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
   });
 
+  // init
   document.addEventListener('DOMContentLoaded', ()=>{
     const d=todayISO();
-    if($("date")) $("date").value=d;
-    if($("dateRoute")) $("dateRoute").value=d;
+    $("date").value=d;
+    $("dateRoute").value=d;
     const la=48.8566, lo=2.3522;
     $("lat").value=la.toFixed(4);
     $("lon").value=lo.toFixed(4);
