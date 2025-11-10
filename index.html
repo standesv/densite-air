@@ -18,23 +18,19 @@
     .header-brand img{height:64px;width:auto;display:block}
     .header-brand h1{margin:0;font-size:1.7rem}
     .header-brand p{margin:3px 0 0;color:var(--muted)}
-    .container{max-width:980px;margin:0 auto;padding:0 10px 80px}
+    .container{max-width:980px;margin:0 auto;padding:0 10px 90px}
     .card{background:var(--panel);border:1px solid #ffffff14;border-radius:14px;padding:10px;margin-top:10px}
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
     input{width:100%;padding:10px;border-radius:10px;border:1px solid #ffffff22;background:#0b1220;color:var(--text)}
     button{border:0;border-radius:10px;padding:10px 12px;font-weight:600;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
     .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 160px}
-    .grid{display:grid;gap:10px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}
-    @media(max-width:900px){.two,.three{grid-template-columns:1fr}}
+    .grid{display:grid;gap:10px}.three{grid-template-columns:repeat(3,1fr)}
+    @media(max-width:900px){.three{grid-template-columns:1fr}}
     .tabs{display:flex;gap:8px}
     .tabs button{flex:1}
-    .kpi{display:grid;grid-template-columns:1fr auto;gap:4px;padding:10px;border-radius:10px;background:#0b1220;border:1px solid #ffffff10}
-    .kpi .label{color:var(--muted);font-size:12px}.kpi .value{font-size:18px;font-weight:800}
     .results{display:grid;gap:6px;margin-top:6px}
     .cityItem{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:#0b1220;border:1px solid #ffffff14;color:#fff;cursor:pointer}
-    .gaugeSVG{max-width:220px;margin:auto;display:block}
-    .guidance{text-align:center;color:#cbd5e1;font-size:12px;margin-top:6px}
-    .lamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px;margin-top:8px}
+    .lamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}
     .lamp{display:flex;gap:8px;align-items:center;background:#0b1220;border:1px solid #ffffff14;border-radius:10px;padding:8px}
     .led{width:9px;height:9px;border-radius:50%;background:#334155}
     .on.green{background:#10b981}.on.yellow{background:#f6b234}.on.red{background:#ef4444}
@@ -45,6 +41,12 @@
     .modepill{display:inline-flex;background:#0b1220;border:1px solid #ffffff1f;border-radius:999px;overflow:hidden;margin-top:6px}
     .modepill button{background:transparent;border:0;padding:6px 12px;font-size:12px;color:#cbd5e1;cursor:pointer}
     .modepill button.active{background:#13b0a6;color:#062a2b;font-weight:600}
+    /* jauges en ligne sous les voyants */
+    .gaugesRow{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+    .gBox{flex:1 1 200px;min-width:180px}
+    .gBox p{margin:0 0 4px}
+    .gaugeSVG{max-width:180px}
+    .guidance{color:#cbd5e1;font-size:12px;margin-top:4px}
   </style>
 </head>
 <body>
@@ -59,7 +61,7 @@
 </header>
 
 <main class="container">
-  <!-- sélection -->
+  <!-- 1. sélection -->
   <section class="card">
     <h2 style="margin:0 0 6px">Ville ou itinéraire</h2>
     <div class="tabs">
@@ -122,40 +124,42 @@
     </div>
   </section>
 
-  <!-- KPIs -->
+  <!-- 2. voyants + jauges -->
   <section class="card">
-    <div class="grid two">
-      <div class="kpi"><div class="label">Température (°C)</div><div class="value" id="kT">—</div></div>
-      <div class="kpi"><div class="label">Humidité (%)</div><div class="value" id="kRH">—</div></div>
-      <div class="kpi"><div class="label">Pression (hPa)</div><div class="value" id="kP">—</div></div>
-      <div class="kpi"><div class="label">Vent/Rafales</div><div class="value" id="kWind">—</div></div>
-      <div class="kpi"><div class="label">Précip.</div><div class="value" id="kPrec">—</div></div>
-      <div class="kpi"><div class="label">ρ (kg/m³)</div><div class="value" id="kRho">—</div></div>
-      <div class="kpi"><div class="label">ρ/ρ₀</div><div class="value" id="kRatio">—</div></div>
-      <div class="kpi"><div class="label">Source</div><div class="value" id="kTs" style="font-size:12px">—</div></div>
-    </div>
-  </section>
-
-  <!-- jauges -->
-  <section class="card">
-    <div class="grid two">
-      <div>
-        <p class="muted" style="margin:0 0 4px">Densité de l’air</p>
+    <div id="lamps" class="lamps"></div>
+    <div class="gaugesRow">
+      <div class="gBox">
+        <p class="muted">Densité de l’air</p>
         <div id="gRho"></div>
         <div id="gRhoTxt" class="guidance">—</div>
       </div>
-      <div>
-        <p class="muted" style="margin:0 0 4px">Score météo moto</p>
+      <div class="gBox">
+        <p class="muted">Score météo moto</p>
         <div id="gScore"></div>
         <div id="gScoreTxt" class="guidance">—</div>
       </div>
     </div>
-    <div id="lamps" class="lamps"></div>
   </section>
 
+  <!-- 3. phénomènes -->
   <section class="card">
     <h2 style="margin:0 0 6px">Phénomènes du jour</h2>
     <p id="dayMsg" class="muted">—</p>
+  </section>
+
+  <!-- 4. KPIs (en bas) -->
+  <section class="card">
+    <h2 style="margin:0 0 6px">Détails</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+      <div class="kpi"><div class="label">Température (°C)</div><div class="value" id="kT">—</div></div>
+      <div class="kpi"><div class="label">Humidité (%)</div><div class="value" id="kRH">—</div></div>
+      <div class="kpi" style="display:none"><div class="label">Pression (hPa)</div><div class="value" id="kP">—</div></div>
+      <div class="kpi"><div class="label">Vent / Rafales</div><div class="value" id="kWind">—</div></div>
+      <div class="kpi"><div class="label">Précip.</div><div class="value" id="kPrec">—</div></div>
+      <div class="kpi" style="display:none"><div class="label">ρ (kg/m³)</div><div class="value" id="kRho">—</div></div>
+      <div class="kpi" style="display:none"><div class="label">ρ/ρ₀</div><div class="value" id="kRatio">—</div></div>
+      <div class="kpi" style="display:none"><div class="label">Source</div><div class="value" id="kTs" style="font-size:12px">—</div></div>
+    </div>
   </section>
 </main>
 
@@ -173,7 +177,6 @@
   const todayISO=()=>{const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10)};
   const isToday=(iso)=>iso===todayISO();
 
-  // densité
   function rhoFromTRP(T_C,RH,p_hPa){
     if([T_C,RH,p_hPa].some(v=>v==null||isNaN(v))) return null;
     const T_K=T_C+273.15;
@@ -184,16 +187,15 @@
     return ((pd*100)*Md + (e*100)*Mv)/(R*T_K);
   }
 
-  // jauge
   function gaugeHalfGradient(elId, value, vMin, vMax, stops){
     const el=$(elId); if(!el) return;
     if(value==null||isNaN(value)){el.innerHTML='<div class="guidance">—</div>';return}
     const t=(Math.min(vMax,Math.max(vMin,value))-vMin)/(vMax-vMin);
-    const size=220,cx=size/2,cy=size/2,R=96;
+    const size=180,cx=size/2,cy=size/2,R=78;
     const arc=Math.PI*R;
     const start=polar(cx,cy,R,-90), end=polar(cx,cy,R,90);
     const angle=-90+180*t;
-    const tip=polar(cx,cy,R-12,angle);
+    const tip=polar(cx,cy,R-10,angle);
     const gid=`g_${elId}`;
     const stopsSvg=stops.map(([off,col])=>`<stop offset="${off}%" stop-color="${col}"/>`).join('');
     const visibleLen = Math.max(0.5, t*arc);
@@ -205,9 +207,9 @@
         </linearGradient>
       </defs>
       <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
-            fill="none" stroke="rgba(255,255,255,.18)" stroke-width="12"/>
+            fill="none" stroke="rgba(255,255,255,.18)" stroke-width="11"/>
       <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
-            fill="none" stroke="url(#${gid})" stroke-width="12"
+            fill="none" stroke="url(#${gid})" stroke-width="11"
             stroke-dasharray="${visibleLen} ${arc - visibleLen}"/>
       <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="5" fill="#e5e7eb"/>
@@ -241,13 +243,14 @@
     for(const i of idx){
       const T=H.temperature_2m?.[i];
       const RH=H.relative_humidity_2m?.[i];
-      const P=H.surface_pressure?.[i];
+      const P=H.surface_hPa?.[i] ?? H.surface_pressure?.[i];
       const W=H.wind_speed_10m?.[i];
       const G=H.wind_gusts_10m?.[i];
       const R=H.precipitation?.[i];
       const V=H.visibility?.[i];
-      const r=rhoFromTRP(T,RH,P); if(r!=null){rhoSum+=r; rhoCount++;}
-      const s=scoreHour({T,RH,P,W,G,R,V}); worstScore=Math.min(worstScore,s);
+      const pUse = H.surface_pressure?.[i] ?? P;
+      const r=rhoFromTRP(T,RH,pUse); if(r!=null){rhoSum+=r; rhoCount++;}
+      const s=scoreHour({T,RH,P:pUse,W,G,R,V}); worstScore=Math.min(worstScore,s);
       maxWind=Math.max(maxWind,W||0); maxGust=Math.max(maxGust,G||0); maxPrec=Math.max(maxPrec,R||0);
       if(T!=null) minTemp=Math.min(minTemp,T);
       if(V!=null) minVis=Math.min(minVis,V);
@@ -262,7 +265,7 @@
     if ((minVis < 1000) || maxRH > 95) events.push('brouillard');
     const Tmean=avgOnIdx(H.temperature_2m,idx);
     const RHmean=avgOnIdx(H.relative_humidity_2m,idx);
-    const Pmean=avgOnIdx(H.surface_pressure,idx);
+    const Pmean=avgOnIdx(H.surface_pressure || H.surface_hPa,idx);
     return {rhoMean,ratioMean,scoreDay:worstScore,events,Tmean,RHmean,Pmean,Wmax:maxWind,Gmax:maxGust,Rmax:maxPrec,Vmin:(minVis<Infinity?minVis:null)};
   }
 
@@ -306,6 +309,7 @@
       {label:'Gants hiver', icon:'🧤', on:gantsHiver, tone:(T<5?'red':(T<10?'yellow':'green'))},
       {label:'Gants été', icon:'🧤', on:!gantsHiver, tone:(T>30?'red':(T>25?'yellow':'green'))},
       {label:'Veste chaude', icon:'🧥', on:vesteChaude, tone:(T<8?'red':(T<15?'yellow':'green'))},
+      // ICI : correction de la ternary qui cassait le JS
       {label:'Veste légère', icon:'🧥', on:!vesteChaude, tone:(T>28?'red':(T>20?'yellow':'green'))},
       {label:'Pantalon pluie', icon:'👖', on:((precip!=null&&precip>0)||(RH!=null&&RH>80)), tone:(precip>=1?'red':'yellow')},
       {label:'Chaussures étanches', icon:'👢', on:(precip!=null&&precip>=1), tone:(precip>=2?'red':'yellow')},
@@ -333,11 +337,18 @@
     return r.json();
   }
 
-  // rendu commun (ville)
+  let currentSingleMode='day';
+  function setSingleModePill(mode){
+    currentSingleMode=mode;
+    const pill=$("modePill"); if(!pill) return;
+    pill.querySelectorAll('button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.mode===mode);
+    });
+  }
+
   async function loadCity(lat,lon,dateISO,mode){
     const st=$("status"); if(st) st.textContent='Chargement…';
     try{
-      // on ne peut faire du temps réel que pour aujourd’hui
       const effectiveMode = (mode==='now' && !isToday(dateISO)) ? 'day' : mode;
       let S, sourceLabel;
       if(effectiveMode==='now'){
@@ -355,14 +366,14 @@
 
       $("kT").textContent=fmt(Tmean," °C");
       $("kRH").textContent=fmt(RHmean," %");
-      $("kP").textContent=fmt(Pmean," hPa");
       $("kWind").textContent=(Wmax!=null?Wmax.toFixed(0):'—')+(Gmax!=null?` • raf ${Gmax.toFixed(0)}`:'');
       $("kPrec").textContent=(Rmax!=null?Rmax.toFixed(2):'—');
-      $("kRho").textContent=fmt(rhoMean," kg/m³");
-      $("kRatio").textContent=(ratioMean?ratioMean.toFixed(3):'—');
-      $("kTs").textContent=sourceLabel;
+      const kP=$("kP"), kRho=$("kRho"), kRatio=$("kRatio"), kTs=$("kTs");
+      if(kP) kP.textContent=fmt(Pmean," hPa");
+      if(kRho) kRho.textContent=fmt(rhoMean," kg/m³");
+      if(kRatio) kRatio.textContent=(ratioMean?ratioMean.toFixed(3):'—');
+      if(kTs) kTs.textContent=sourceLabel;
 
-      // densité
       gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [
         [0,  '#22c55e'],
         [25, '#facc15'],
@@ -370,7 +381,6 @@
         [75, '#ef4444'],
         [100,'#ef4444']
       ]);
-      // score
       gaugeHalfGradient('gScore', scoreDay, 0, 100, [
         [0,  '#ef4444'],
         [25, '#f97316'],
@@ -379,7 +389,6 @@
         [100,'#22c55e']
       ]);
 
-      // si pluie ou humidité très forte → ne pas dire "favorables"
       const needsRainGear = (Rmax!=null && Rmax>0) || (RHmean!=null && RHmean>90);
       let scoreLabel;
       if(scoreDay>=80 && !needsRainGear) scoreLabel='🟢 Favorables';
@@ -387,8 +396,8 @@
       else if(scoreDay>=50) scoreLabel='🟠 Mitigées';
       else scoreLabel='🔴 Défavorables';
       $("gScoreTxt").textContent = scoreLabel;
+      $("gRhoTxt").textContent = (ratioMean==null? '—' : (ratioMean<0.99? 'Air plutôt léger (vert)' : (ratioMean<=1.03? 'Densité moyenne (jaune/orange)' : 'Air riche (rouge)')));
 
-      // phénomènes
       if(events && events.length){
         $("dayMsg").textContent = (effectiveMode==='now'
           ? 'Phénomènes actuels : '+events.join(', ')
@@ -398,23 +407,15 @@
         $("dayMsg").textContent = (effectiveMode==='now' ? 'Conditions actuelles calmes.' : 'Aucun phénomène notable.');
       }
 
-      $("gRhoTxt").textContent = (ratioMean==null? '—' : (ratioMean<0.99? 'Air plutôt léger (vert)' : (ratioMean<=1.03? 'Densité moyenne (jaune/orange)' : 'Air riche (rouge)')));
-
       renderLamps(S);
       if(st) st.innerHTML=`✅ Données chargées pour ${effectiveMode==='now'?'maintenant':dateISO} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-
-      // si on a forcé le mode 'day' alors que l'utilisateur avait cliqué 'now', on recale l’UI
-      if(mode==='now' && effectiveMode==='day'){
-        setSingleModePill('day');
-      }
-
+      if(mode==='now' && effectiveMode==='day'){ setSingleModePill('day'); }
     }catch(e){
       console.error(e);
       if(st) st.innerHTML=`<span style="color:#ef4444">Échec : ${e.message}</span>`;
     }
   }
 
-  // --- recherche villes ---
   function debounce(fn,ms){let t; return(...args)=>{clearTimeout(t); t=setTimeout(()=>fn(...args),ms);} }
 
   async function searchCityInto(inputId, resultsId, onPick){
@@ -461,23 +462,24 @@
     autoEvaluate();
   }), 300);
 
-  // --- mode de la vue ville (jour/now) ---
-  let currentSingleMode='day';
-  function setSingleModePill(mode){
-    currentSingleMode=mode;
-    const pill=$("modePill"); if(!pill) return;
-    pill.querySelectorAll('button').forEach(b=>{
-      b.classList.toggle('active', b.dataset.mode===mode);
-    });
-  }
-  $("modePill").addEventListener('click', (e)=>{
-    if(e.target && e.target.dataset && e.target.dataset.mode){
-      setSingleModePill(e.target.dataset.mode);
-      autoEvaluate();
-    }
-  });
+  // ajouter Enter pour déclencher la recherche tout de suite
+  $("city").addEventListener('keydown', e=>{ if(e.key==="Enter") searchCityInto('city','results', v=>{
+    $("city").value=v.name;
+    $("lat").value=v.latitude.toFixed(4); $("lon").value=v.longitude.toFixed(4);
+    const d=($("date").value||todayISO());
+    loadCity(v.latitude,v.longitude,d,currentSingleMode);
+  }); });
+  $("cityA").addEventListener('keydown', e=>{ if(e.key==="Enter") searchCityInto('cityA','resultsA', v=>{
+    A={name:v.name,lat:v.latitude,lon:v.longitude};
+    $("cityA").value=v.name;
+    autoEvaluate();
+  }); });
+  $("cityB").addEventListener('keydown', e=>{ if(e.key==="Enter") searchCityInto('cityB','resultsB', v=>{
+    B={name:v.name,lat:v.latitude,lon:v.longitude};
+    $("cityB").value=v.name;
+    autoEvaluate();
+  }); });
 
-  // --- onglets ---
   let MODE='single';
   $("tabSingle").addEventListener('click', ()=>{
     MODE='single';
@@ -494,7 +496,6 @@
     $("tabSingle").style.background=''; $("tabSingle").style.color='';
   });
 
-  // --- itinéraire ---
   async function evaluateRoute(date){
     const info=$("statusRoute");
     if(!A||!B){ if(info) info.innerHTML='<span style="color:#ef4444">Choisissez départ et arrivée.</span>'; return; }
@@ -539,12 +540,8 @@
 
       $("kT").textContent=fmt(avg2(SA.Tmean,SB.Tmean)," °C");
       $("kRH").textContent=fmt(avg2(SA.RHmean,SB.RHmean)," %");
-      $("kP").textContent=fmt(avg2(SA.Pmean,SB.Pmean)," hPa");
       $("kWind").textContent=`${Math.round(avg2(SA.Wmax,SB.Wmax)||0)} • raf ${Math.round(avg2(SA.Gmax,SB.Gmax)||0)}`;
       $("kPrec").textContent=fmt(avg2(SA.Rmax,SB.Rmax),"");
-      $("kRho").textContent=fmt(rhoAvg," kg/m³");
-      $("kRatio").textContent=(ratioAvg?ratioAvg.toFixed(3):'—');
-      $("kTs").textContent=date;
 
       if(info) info.innerHTML=`✅ Itinéraire évalué pour le ${date} — ${A.name} ↔ ${B.name}`;
     }catch(e){
@@ -564,10 +561,13 @@
     }
   }
 
-  // events
-  $("city").addEventListener('input', acSingle);
-  $("cityA").addEventListener('input', acA);
-  $("cityB").addEventListener('input', acB);
+  $("modePill").addEventListener('click', (e)=>{
+    if(e.target && e.target.dataset && e.target.dataset.mode){
+      setSingleModePill(e.target.dataset.mode);
+      autoEvaluate();
+    }
+  });
+
   $("date").addEventListener('change', ()=>autoEvaluate());
   $("dateRoute").addEventListener('change', ()=>autoEvaluate());
 
@@ -596,7 +596,6 @@
     }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
   });
 
-  // init
   document.addEventListener('DOMContentLoaded', ()=>{
     const d=todayISO();
     $("date").value=d;
