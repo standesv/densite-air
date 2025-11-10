@@ -37,16 +37,36 @@
     .muted{color:var(--muted)}
     .stickyBar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;gap:8px;padding:10px;background:var(--bg);border-top:1px solid #ffffff14}
     .stickyBar button{flex:1}
-    /* sélecteur de mode (jour / temps réel) */
     .modepill{display:inline-flex;background:#0b1220;border:1px solid #ffffff1f;border-radius:999px;overflow:hidden;margin-top:6px}
     .modepill button{background:transparent;border:0;padding:6px 12px;font-size:12px;color:#cbd5e1;cursor:pointer}
     .modepill button.active{background:#13b0a6;color:#062a2b;font-weight:600}
-    /* jauges en ligne sous les voyants */
-    .gaugesRow{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
-    .gBox{flex:1 1 200px;min-width:180px}
+    /* jauges sous les voyants */
+    .gaugesRow{
+      display:flex;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .gBox{
+      flex:0 1 160px;
+      min-width:150px;
+      text-align:left;
+    }
     .gBox p{margin:0 0 4px}
-    .gaugeSVG{max-width:180px}
+    .gaugeSVG{max-width:140px;display:block}
     .guidance{color:#cbd5e1;font-size:12px;margin-top:4px}
+    /* sur écran très étroit : on centre chaque jauge et on les met l'une sous l'autre */
+    @media(max-width:480px){
+      .gBox{
+        flex:1 1 100%;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+      }
+      .gBox p{text-align:center}
+    }
   </style>
 </head>
 <body>
@@ -69,7 +89,6 @@
       <button id="tabRoute" aria-selected="false" style="background:#1f2937;color:#e5e7eb">Itinéraire</button>
     </div>
 
-    <!-- mode ville -->
     <div id="panelSingle" style="margin-top:8px">
       <div class="modepill" id="modePill">
         <button type="button" data-mode="day" class="active">Jour (moy.)</button>
@@ -102,7 +121,6 @@
       <p id="status" class="muted" style="margin:6px 0 0;"></p>
     </div>
 
-    <!-- mode itinéraire -->
     <div id="panelRoute" style="margin-top:8px;display:none">
       <div class="grid three">
         <div>
@@ -129,14 +147,14 @@
     <div id="lamps" class="lamps"></div>
     <div class="gaugesRow">
       <div class="gBox">
+        <p class="muted">Score météo</p>
+        <div id="gScore"></div>
+        <div id="gScoreTxt" class="guidance">—</div>
+      </div>
+      <div class="gBox">
         <p class="muted">Densité de l’air</p>
         <div id="gRho"></div>
         <div id="gRhoTxt" class="guidance">—</div>
-      </div>
-      <div class="gBox">
-        <p class="muted">Score météo moto</p>
-        <div id="gScore"></div>
-        <div id="gScoreTxt" class="guidance">—</div>
       </div>
     </div>
   </section>
@@ -191,7 +209,7 @@
     const el=$(elId); if(!el) return;
     if(value==null||isNaN(value)){el.innerHTML='<div class="guidance">—</div>';return}
     const t=(Math.min(vMax,Math.max(vMin,value))-vMin)/(vMax-vMin);
-    const size=180,cx=size/2,cy=size/2,R=78;
+    const size=160,cx=size/2,cy=size/2,R=70;
     const arc=Math.PI*R;
     const start=polar(cx,cy,R,-90), end=polar(cx,cy,R,90);
     const angle=-90+180*t;
@@ -207,12 +225,12 @@
         </linearGradient>
       </defs>
       <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
-            fill="none" stroke="rgba(255,255,255,.18)" stroke-width="11"/>
+            fill="none" stroke="rgba(255,255,255,.18)" stroke-width="10"/>
       <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
-            fill="none" stroke="url(#${gid})" stroke-width="11"
+            fill="none" stroke="url(#${gid})" stroke-width="10"
             stroke-dasharray="${visibleLen} ${arc - visibleLen}"/>
-      <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="${cx}" cy="${cy}" r="5" fill="#e5e7eb"/>
+      <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="4" fill="#e5e7eb"/>
     </svg>`;
   }
 
@@ -243,14 +261,13 @@
     for(const i of idx){
       const T=H.temperature_2m?.[i];
       const RH=H.relative_humidity_2m?.[i];
-      const P=H.surface_hPa?.[i] ?? H.surface_pressure?.[i];
+      const P=H.surface_pressure?.[i];
       const W=H.wind_speed_10m?.[i];
       const G=H.wind_gusts_10m?.[i];
       const R=H.precipitation?.[i];
       const V=H.visibility?.[i];
-      const pUse = H.surface_pressure?.[i] ?? P;
-      const r=rhoFromTRP(T,RH,pUse); if(r!=null){rhoSum+=r; rhoCount++;}
-      const s=scoreHour({T,RH,P:pUse,W,G,R,V}); worstScore=Math.min(worstScore,s);
+      const r=rhoFromTRP(T,RH,P); if(r!=null){rhoSum+=r; rhoCount++;}
+      const s=scoreHour({T,RH,P,W,G,R,V}); worstScore=Math.min(worstScore,s);
       maxWind=Math.max(maxWind,W||0); maxGust=Math.max(maxGust,G||0); maxPrec=Math.max(maxPrec,R||0);
       if(T!=null) minTemp=Math.min(minTemp,T);
       if(V!=null) minVis=Math.min(minVis,V);
@@ -265,7 +282,7 @@
     if ((minVis < 1000) || maxRH > 95) events.push('brouillard');
     const Tmean=avgOnIdx(H.temperature_2m,idx);
     const RHmean=avgOnIdx(H.relative_humidity_2m,idx);
-    const Pmean=avgOnIdx(H.surface_pressure || H.surface_hPa,idx);
+    const Pmean=avgOnIdx(H.surface_pressure,idx);
     return {rhoMean,ratioMean,scoreDay:worstScore,events,Tmean,RHmean,Pmean,Wmax:maxWind,Gmax:maxGust,Rmax:maxPrec,Vmin:(minVis<Infinity?minVis:null)};
   }
 
@@ -309,7 +326,6 @@
       {label:'Gants hiver', icon:'🧤', on:gantsHiver, tone:(T<5?'red':(T<10?'yellow':'green'))},
       {label:'Gants été', icon:'🧤', on:!gantsHiver, tone:(T>30?'red':(T>25?'yellow':'green'))},
       {label:'Veste chaude', icon:'🧥', on:vesteChaude, tone:(T<8?'red':(T<15?'yellow':'green'))},
-      // ICI : correction de la ternary qui cassait le JS
       {label:'Veste légère', icon:'🧥', on:!vesteChaude, tone:(T>28?'red':(T>20?'yellow':'green'))},
       {label:'Pantalon pluie', icon:'👖', on:((precip!=null&&precip>0)||(RH!=null&&RH>80)), tone:(precip>=1?'red':'yellow')},
       {label:'Chaussures étanches', icon:'👢', on:(precip!=null&&precip>=1), tone:(precip>=2?'red':'yellow')},
@@ -374,13 +390,7 @@
       if(kRatio) kRatio.textContent=(ratioMean?ratioMean.toFixed(3):'—');
       if(kTs) kTs.textContent=sourceLabel;
 
-      gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [
-        [0,  '#22c55e'],
-        [25, '#facc15'],
-        [50, '#f97316'],
-        [75, '#ef4444'],
-        [100,'#ef4444']
-      ]);
+      // jauge Score météo (1ère)
       gaugeHalfGradient('gScore', scoreDay, 0, 100, [
         [0,  '#ef4444'],
         [25, '#f97316'],
@@ -388,15 +398,29 @@
         [75, '#22c55e'],
         [100,'#22c55e']
       ]);
-
       const needsRainGear = (Rmax!=null && Rmax>0) || (RHmean!=null && RHmean>90);
       let scoreLabel;
       if(scoreDay>=80 && !needsRainGear) scoreLabel='🟢 Favorables';
       else if(scoreDay>=80 && needsRainGear) scoreLabel='🟠 Mitigées (pluie possible)';
       else if(scoreDay>=50) scoreLabel='🟠 Mitigées';
-      else scoreLabel='🔴 Défavorables';
+      else scoreLabel='🔴 Défavorable';
       $("gScoreTxt").textContent = scoreLabel;
-      $("gRhoTxt").textContent = (ratioMean==null? '—' : (ratioMean<0.99? 'Air plutôt léger (vert)' : (ratioMean<=1.03? 'Densité moyenne (jaune/orange)' : 'Air riche (rouge)')));
+
+      // jauge Densité (2ème) + légende façon score
+      gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [
+        [0,  '#22c55e'],
+        [25, '#facc15'],
+        [50, '#f97316'],
+        [75, '#ef4444'],
+        [100,'#ef4444']
+      ]);
+      let rhoLabel='—';
+      if(ratioMean!=null){
+        if(ratioMean < 0.99) rhoLabel='🟢 Air plutôt léger';
+        else if(ratioMean <= 1.03) rhoLabel='🟠 Densité moyenne';
+        else rhoLabel='🔴 Air riche';
+      }
+      $("gRhoTxt").textContent = rhoLabel;
 
       if(events && events.length){
         $("dayMsg").textContent = (effectiveMode==='now'
@@ -462,24 +486,6 @@
     autoEvaluate();
   }), 300);
 
-  // ajouter Enter pour déclencher la recherche tout de suite
-  $("city").addEventListener('keydown', e=>{ if(e.key==="Enter") searchCityInto('city','results', v=>{
-    $("city").value=v.name;
-    $("lat").value=v.latitude.toFixed(4); $("lon").value=v.longitude.toFixed(4);
-    const d=($("date").value||todayISO());
-    loadCity(v.latitude,v.longitude,d,currentSingleMode);
-  }); });
-  $("cityA").addEventListener('keydown', e=>{ if(e.key==="Enter") searchCityInto('cityA','resultsA', v=>{
-    A={name:v.name,lat:v.latitude,lon:v.longitude};
-    $("cityA").value=v.name;
-    autoEvaluate();
-  }); });
-  $("cityB").addEventListener('keydown', e=>{ if(e.key==="Enter") searchCityInto('cityB','resultsB', v=>{
-    B={name:v.name,lat:v.latitude,lon:v.longitude};
-    $("cityB").value=v.name;
-    autoEvaluate();
-  }); });
-
   let MODE='single';
   $("tabSingle").addEventListener('click', ()=>{
     MODE='single';
@@ -508,13 +514,6 @@
       const ratioAvg = rhoAvg? rhoAvg/1.225 : null;
       const scoreAvg = avg2(SA.scoreDay,SB.scoreDay);
 
-      gaugeHalfGradient('gRho', ratioAvg, 0.90, 1.08, [
-        [0,  '#22c55e'],
-        [25, '#facc15'],
-        [50, '#f97316'],
-        [75, '#ef4444'],
-        [100,'#ef4444']
-      ]);
       gaugeHalfGradient('gScore', scoreAvg, 0, 100, [
         [0,  '#ef4444'],
         [25, '#f97316'],
@@ -522,9 +521,22 @@
         [75, '#22c55e'],
         [100,'#22c55e']
       ]);
+      $("gScoreTxt").textContent = (scoreAvg>=80? '🟢 Favorables (itinéraire)' : (scoreAvg>=50? '🟠 Mitigées (itinéraire)' : '🔴 Défavorable (itinéraire)'));
 
-      $("gScoreTxt").textContent = (scoreAvg>=80? '🟢 Favorables (itinéraire)' : (scoreAvg>=50? '🟠 Mitigées (itinéraire)' : '🔴 Défavorables (itinéraire)'));
-      $("gRhoTxt").textContent = (ratioAvg==null? '—' : `ρ/ρ₀ moyen itinéraire : ${ratioAvg.toFixed(3)}`);
+      gaugeHalfGradient('gRho', ratioAvg, 0.90, 1.08, [
+        [0,  '#22c55e'],
+        [25, '#facc15'],
+        [50, '#f97316'],
+        [75, '#ef4444'],
+        [100,'#ef4444']
+      ]);
+      let rhoLabel='—';
+      if(ratioAvg!=null){
+        if(ratioAvg < 0.99) rhoLabel='🟢 Air plutôt léger';
+        else if(ratioAvg <= 1.03) rhoLabel='🟠 Densité moyenne';
+        else rhoLabel='🔴 Air riche';
+      }
+      $("gRhoTxt").textContent = rhoLabel;
 
       const ev = Array.from(new Set([...(SA.events||[]), ...(SB.events||[])]));
       $("dayMsg").textContent = ev.length? `Phénomènes sur l’itinéraire : ${ev.join(', ')}` : 'Aucun phénomène notable (itinéraire).';
@@ -567,6 +579,14 @@
       autoEvaluate();
     }
   });
+
+  $("city").addEventListener('input', acSingle);
+  $("cityA").addEventListener('input', acA);
+  $("cityB").addEventListener('input', acB);
+
+  $("city").addEventListener('keydown', e=>{ if(e.key==="Enter") acSingle(); });
+  $("cityA").addEventListener('keydown', e=>{ if(e.key==="Enter") acA(); });
+  $("cityB").addEventListener('keydown', e=>{ if(e.key==="Enter") acB(); });
 
   $("date").addEventListener('change', ()=>autoEvaluate());
   $("dateRoute").addEventListener('change', ()=>autoEvaluate());
