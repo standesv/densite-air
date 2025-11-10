@@ -54,9 +54,14 @@
       text-align:left;
     }
     .gBox p{margin:0 0 4px}
-    .gaugeSVG{max-width:140px;display:block}
+    /* <<< FIX ICI : largeur forcée + responsive >>> */
+    .gaugeSVG{
+      width:140px;
+      max-width:100%;
+      height:auto;
+      display:block;
+    }
     .guidance{color:#cbd5e1;font-size:12px;margin-top:4px}
-    /* sur écran très étroit : on centre chaque jauge et on les met l'une sous l'autre */
     @media(max-width:480px){
       .gBox{
         flex:1 1 100%;
@@ -66,6 +71,7 @@
         text-align:center;
       }
       .gBox p{text-align:center}
+      .gaugeSVG{margin:0 auto;}
     }
   </style>
 </head>
@@ -165,7 +171,7 @@
     <p id="dayMsg" class="muted">—</p>
   </section>
 
-  <!-- 4. KPIs (en bas) -->
+  <!-- 4. KPIs -->
   <section class="card">
     <h2 style="margin:0 0 6px">Détails</h2>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
@@ -390,7 +396,6 @@
       if(kRatio) kRatio.textContent=(ratioMean?ratioMean.toFixed(3):'—');
       if(kTs) kTs.textContent=sourceLabel;
 
-      // jauge Score météo (1ère)
       gaugeHalfGradient('gScore', scoreDay, 0, 100, [
         [0,  '#ef4444'],
         [25, '#f97316'],
@@ -406,7 +411,6 @@
       else scoreLabel='🔴 Défavorable';
       $("gScoreTxt").textContent = scoreLabel;
 
-      // jauge Densité (2ème) + légende façon score
       gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [
         [0,  '#22c55e'],
         [25, '#facc15'],
@@ -580,13 +584,22 @@
     }
   });
 
-  $("city").addEventListener('input', acSingle);
-  $("cityA").addEventListener('input', acA);
-  $("cityB").addEventListener('input', acB);
-
-  $("city").addEventListener('keydown', e=>{ if(e.key==="Enter") acSingle(); });
-  $("cityA").addEventListener('keydown', e=>{ if(e.key==="Enter") acA(); });
-  $("cityB").addEventListener('keydown', e=>{ if(e.key==="Enter") acB(); });
+  $("city").addEventListener('input', debounce(()=> searchCityInto('city','results', v=>{
+    $("city").value=v.name;
+    $("lat").value=v.latitude.toFixed(4); $("lon").value=v.longitude.toFixed(4);
+    const d=($("date").value||todayISO());
+    loadCity(v.latitude,v.longitude,d,currentSingleMode);
+  }), 300));
+  $("cityA").addEventListener('input', debounce(()=> searchCityInto('cityA','resultsA', v=>{
+    A={name:v.name,lat:v.latitude,lon:v.longitude};
+    $("cityA").value=v.name;
+    autoEvaluate();
+  }), 300));
+  $("cityB").addEventListener('input', debounce(()=> searchCityInto('cityB','resultsB', v=>{
+    B={name:v.name,lat:v.latitude,lon:v.longitude};
+    $("cityB").value=v.name;
+    autoEvaluate();
+  }), 300));
 
   $("date").addEventListener('change', ()=>autoEvaluate());
   $("dateRoute").addEventListener('change', ()=>autoEvaluate());
