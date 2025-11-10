@@ -49,20 +49,20 @@
       justify-content:center;
     }
     .gBox{
-      flex:0 1 160px;
-      min-width:150px;
+      flex:0 1 135px;   /* ← on réduit */
+      min-width:130px;
       text-align:left;
     }
     .gBox p{margin:0 0 4px}
-    /* <<< FIX ICI : largeur forcée + responsive >>> */
     .gaugeSVG{
-      width:140px;
+      width:120px;      /* ← jauge plus petite */
       max-width:100%;
       height:auto;
       display:block;
     }
     .guidance{color:#cbd5e1;font-size:12px;margin-top:4px}
-    @media(max-width:480px){
+    /* on ne pile VRAIMENT que sur très petit écran */
+    @media(max-width:360px){
       .gBox{
         flex:1 1 100%;
         display:flex;
