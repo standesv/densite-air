@@ -8,8 +8,10 @@
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com"/>
   <style>
     :root{
-      --bg:#0b1120; --panel:#101826; --muted:#9fb0c7; --brand:#13b0a6; --brand-ink:#062a2b;
-      --ok:#10b981; --warn:#f6b234; --err:#ef4444; --text:#e5e7eb;
+      --bg:#0b1120; --panel:#101826; --muted:#9fb0c7;
+      --brand:#13b0a6; --brand-ink:#062a2b;
+      --ok:#10b981; --warn:#f6b234; --err:#ef4444;
+      --text:#e5e7eb;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -26,8 +28,7 @@
     .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 160px}
     .grid{display:grid;gap:10px}.three{grid-template-columns:repeat(3,1fr)}
     @media(max-width:900px){.three{grid-template-columns:1fr}}
-    .tabs{display:flex;gap:8px}
-    .tabs button{flex:1}
+    .tabs{display:flex;gap:8px}.tabs button{flex:1}
     .results{display:grid;gap:6px;margin-top:6px}
     .cityItem{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:#0b1220;border:1px solid #ffffff14;color:#fff;cursor:pointer}
     .lamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}
@@ -40,39 +41,24 @@
     .modepill{display:inline-flex;background:#0b1220;border:1px solid #ffffff1f;border-radius:999px;overflow:hidden;margin-top:6px}
     .modepill button{background:transparent;border:0;padding:6px 12px;font-size:12px;color:#cbd5e1;cursor:pointer}
     .modepill button.active{background:#13b0a6;color:#062a2b;font-weight:600}
-    /* jauges sous les voyants */
-    .gaugesRow{
-      display:flex;
-      gap:10px;
-      margin-top:10px;
-      flex-wrap:wrap;
-      justify-content:center;
-    }
-    .gBox{
-      flex:0 1 135px;   /* ← on réduit */
-      min-width:130px;
-      text-align:left;
-    }
+    /* Jauges */
+    .gaugesRow{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+    .gBox{flex:0 1 135px;min-width:130px;text-align:left}
     .gBox p{margin:0 0 4px}
-    .gaugeSVG{
-      width:120px;      /* ← jauge plus petite */
-      max-width:100%;
-      height:auto;
-      display:block;
-    }
+    .gaugeSVG{width:120px;max-width:100%;height:auto;display:block}
     .guidance{color:#cbd5e1;font-size:12px;margin-top:4px}
-    /* on ne pile VRAIMENT que sur très petit écran */
     @media(max-width:360px){
-      .gBox{
-        flex:1 1 100%;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        text-align:center;
-      }
+      .gBox{flex:1 1 100%;display:flex;flex-direction:column;align-items:center;text-align:center}
       .gBox p{text-align:center}
       .gaugeSVG{margin:0 auto;}
     }
+    /* Détails en petits cadres */
+    .kpiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:6px}
+    .kpiCard{background:#0b1220;border:1px solid #ffffff10;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;min-height:60px}
+    .kpiLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+    .kpiValue{font-size:1.15rem;font-weight:700}
+    .kpiSmall{font-size:10px;color:#6b7280}
+    .hide{display:none!important}
   </style>
 </head>
 <body>
@@ -81,13 +67,13 @@
     <img src="ridescore-logo.png" alt="RideScore, météo moto">
     <div>
       <h1>RideScore</h1>
-      <p>Densité de l’air, score météo, voyants</p>
+      <p>La météo pensée pour les motards</p>
     </div>
   </div>
 </header>
 
 <main class="container">
-  <!-- 1. sélection -->
+  <!-- Sélection -->
   <section class="card">
     <h2 style="margin:0 0 6px">Ville ou itinéraire</h2>
     <div class="tabs">
@@ -95,6 +81,7 @@
       <button id="tabRoute" aria-selected="false" style="background:#1f2937;color:#e5e7eb">Itinéraire</button>
     </div>
 
+    <!-- Mode ville -->
     <div id="panelSingle" style="margin-top:8px">
       <div class="modepill" id="modePill">
         <button type="button" data-mode="day" class="active">Jour (moy.)</button>
@@ -114,19 +101,14 @@
       <details>
         <summary>Options avancées</summary>
         <div class="row" style="margin-top:6px">
-          <div>
-            <label for="lat">Latitude</label>
-            <input id="lat" type="number" step="0.0001" placeholder="48.8566"/>
-          </div>
-          <div>
-            <label for="lon">Longitude</label>
-            <input id="lon" type="number" step="0.0001" placeholder="2.3522"/>
-          </div>
+          <div><label for="lat">Latitude</label><input id="lat" type="number" step="0.0001" placeholder="48.8566"/></div>
+          <div><label for="lon">Longitude</label><input id="lon" type="number" step="0.0001" placeholder="2.3522"/></div>
         </div>
       </details>
       <p id="status" class="muted" style="margin:6px 0 0;"></p>
     </div>
 
+    <!-- Mode itinéraire -->
     <div id="panelRoute" style="margin-top:8px;display:none">
       <div class="grid three">
         <div>
@@ -148,7 +130,7 @@
     </div>
   </section>
 
-  <!-- 2. voyants + jauges -->
+  <!-- Voyants + jauges -->
   <section class="card">
     <div id="lamps" class="lamps"></div>
     <div class="gaugesRow">
@@ -165,24 +147,24 @@
     </div>
   </section>
 
-  <!-- 3. phénomènes -->
+  <!-- Phénomènes -->
   <section class="card">
     <h2 style="margin:0 0 6px">Phénomènes du jour</h2>
     <p id="dayMsg" class="muted">—</p>
   </section>
 
-  <!-- 4. KPIs -->
+  <!-- Détails -->
   <section class="card">
     <h2 style="margin:0 0 6px">Détails</h2>
-    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
-      <div class="kpi"><div class="label">Température (°C)</div><div class="value" id="kT">—</div></div>
-      <div class="kpi"><div class="label">Humidité (%)</div><div class="value" id="kRH">—</div></div>
-      <div class="kpi" style="display:none"><div class="label">Pression (hPa)</div><div class="value" id="kP">—</div></div>
-      <div class="kpi"><div class="label">Vent / Rafales</div><div class="value" id="kWind">—</div></div>
-      <div class="kpi"><div class="label">Précip.</div><div class="value" id="kPrec">—</div></div>
-      <div class="kpi" style="display:none"><div class="label">ρ (kg/m³)</div><div class="value" id="kRho">—</div></div>
-      <div class="kpi" style="display:none"><div class="label">ρ/ρ₀</div><div class="value" id="kRatio">—</div></div>
-      <div class="kpi" style="display:none"><div class="label">Source</div><div class="value" id="kTs" style="font-size:12px">—</div></div>
+    <div class="kpiGrid">
+      <div class="kpiCard"><div class="kpiLabel">Température</div><div class="kpiValue" id="kT">—</div></div>
+      <div class="kpiCard"><div class="kpiLabel">Humidité</div><div class="kpiValue" id="kRH">—</div></div>
+      <div class="kpiCard"><div class="kpiLabel">Vent / Rafales</div><div class="kpiValue" id="kWind">—</div></div>
+      <div class="kpiCard"><div class="kpiLabel">Précipitation</div><div class="kpiValue" id="kPrec">—</div></div>
+      <div class="kpiCard hide"><div class="kpiLabel">Pression</div><div class="kpiValue" id="kP">—</div></div>
+      <div class="kpiCard hide"><div class="kpiLabel">ρ (kg/m³)</div><div class="kpiValue" id="kRho">—</div></div>
+      <div class="kpiCard hide"><div class="kpiLabel">ρ/ρ₀</div><div class="kpiValue" id="kRatio">—</div></div>
+      <div class="kpiCard hide"><div class="kpiLabel">Source</div><div class="kpiValue kpiSmall" id="kTs">—</div></div>
     </div>
   </section>
 </main>
@@ -197,10 +179,12 @@
   'use strict';
   const $=id=>document.getElementById(id);
   const fmt=(v,u="")=>(v==null||Number.isNaN(+v))?"—":`${(+v).toFixed(2)}${u}`;
+  const todayISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+  const isToday=iso=>iso===todayISO();
   const polar=(cx,cy,r,aDeg)=>{const a=aDeg*Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}};
-  const todayISO=()=>{const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10)};
-  const isToday=(iso)=>iso===todayISO();
+  function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
 
+  // densité d’air humide
   function rhoFromTRP(T_C,RH,p_hPa){
     if([T_C,RH,p_hPa].some(v=>v==null||isNaN(v))) return null;
     const T_K=T_C+273.15;
@@ -208,39 +192,35 @@
     const e=(RH/100)*es;
     const pd=p_hPa-e;
     const R=8.314462618, Md=0.0289652, Mv=0.018016;
-    return ((pd*100)*Md + (e*100)*Mv)/(R*T_K);
+    return ((pd*100)*Md+(e*100)*Mv)/(R*T_K);
   }
 
+  // jauge demi-cercle
   function gaugeHalfGradient(elId, value, vMin, vMax, stops){
     const el=$(elId); if(!el) return;
-    if(value==null||isNaN(value)){el.innerHTML='<div class="guidance">—</div>';return}
+    if(value==null||isNaN(value)){el.innerHTML='—';return}
     const t=(Math.min(vMax,Math.max(vMin,value))-vMin)/(vMax-vMin);
-    const size=160,cx=size/2,cy=size/2,R=70;
-    const arc=Math.PI*R;
-    const start=polar(cx,cy,R,-90), end=polar(cx,cy,R,90);
-    const angle=-90+180*t;
-    const tip=polar(cx,cy,R-10,angle);
+    const size=160,cx=size/2,cy=size/2,R=70,arc=Math.PI*R;
+    const start=polar(cx,cy,R,-90),end=polar(cx,cy,R,90);
+    const angle=-90+180*t, tip=polar(cx,cy,R-10,angle);
     const gid=`g_${elId}`;
     const stopsSvg=stops.map(([off,col])=>`<stop offset="${off}%" stop-color="${col}"/>`).join('');
-    const visibleLen = Math.max(0.5, t*arc);
+    const visibleLen=Math.max(0.5,t*arc);
     el.innerHTML=`<svg class="gaugeSVG" viewBox="0 0 ${size} ${size}">
       <defs>
-        <linearGradient id="${gid}" gradientUnits="userSpaceOnUse"
-          x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}">
+        <linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}">
           ${stopsSvg}
         </linearGradient>
       </defs>
-      <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
-            fill="none" stroke="rgba(255,255,255,.18)" stroke-width="10"/>
-      <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
-            fill="none" stroke="url(#${gid})" stroke-width="10"
-            stroke-dasharray="${visibleLen} ${arc - visibleLen}"/>
+      <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="10"/>
+      <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="url(#${gid})" stroke-width="10"
+        stroke-dasharray="${visibleLen} ${arc-visibleLen}"/>
       <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="3.5" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4" fill="#e5e7eb"/>
     </svg>`;
   }
 
-  // scoring
+  // scoring (comme avant)
   const scoreFromTemperature=T=> (T==null||isNaN(T))?12: (T>=10&&T<=25?25:((T>=5&&T<10)||(T>25&&T<=30)?15:5));
   const scoreFromRain=p=> (p==null||isNaN(p))?12:(p===0?15:(p<1?8:0));
   const scoreFromWind=(w,g)=>{const v=Math.max(w||0,g||0);return v<25?20:(v<50?10:0)};
@@ -362,56 +342,66 @@
   let currentSingleMode='day';
   function setSingleModePill(mode){
     currentSingleMode=mode;
-    const pill=$("modePill"); if(!pill) return;
-    pill.querySelectorAll('button').forEach(b=>{
-      b.classList.toggle('active', b.dataset.mode===mode);
-    });
+    const pill=$("modePill");
+    pill.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  }
+
+  function updateDetailsUI({Tmean,RHmean,Pmean,Wmax,Gmax,Rmax,rhoMean,ratioMean}, label){
+    $("kT").textContent=fmt(Tmean," °C");
+    $("kRH").textContent=fmt(RHmean," %");
+    $("kWind").textContent=(Wmax!=null?`${Wmax.toFixed(0)} km/h`:'—')+(Gmax!=null?` • raf ${Gmax.toFixed(0)} km/h`:'');
+    $("kPrec").textContent=(Rmax!=null?`${Rmax.toFixed(2)} mm`:'—');
+    $("kP").textContent=fmt(Pmean," hPa");
+    $("kRho").textContent=fmt(rhoMean," kg/m³");
+    $("kRatio").textContent=(ratioMean?ratioMean.toFixed(3):'—');
+    $("kTs").textContent=label||'—';
   }
 
   async function loadCity(lat,lon,dateISO,mode){
     const st=$("status"); if(st) st.textContent='Chargement…';
     try{
-      const effectiveMode = (mode==='now' && !isToday(dateISO)) ? 'day' : mode;
-      let S, sourceLabel;
+      const effectiveMode=(mode==='now' && !isToday(dateISO)) ? 'day' : mode;
+      let S, label;
       if(effectiveMode==='now'){
         const d=await fetchCurrent(lat,lon);
         S=computeCurrentSummary(d.current);
-        sourceLabel='Temps réel';
+        label='Temps réel';
       }else{
         const d=await fetchDay(lat,lon,dateISO);
         S=computeDaySummaryFromHourly(d.hourly||{},dateISO);
-        sourceLabel=dateISO;
+        label=dateISO;
       }
-      if(!S){ if(st) st.innerHTML='<span style="color:#ef4444">Pas de données.</span>'; return; }
+      if(!S){ st.innerHTML='<span style="color:#ef4444">Pas de données.</span>'; return; }
 
-      const {rhoMean,ratioMean,scoreDay,events,Tmean,RHmean,Pmean,Wmax,Gmax,Rmax}=S;
+      updateDetailsUI({
+        Tmean:S.Tmean,
+        RHmean:S.RHmean,
+        Pmean:S.Pmean,
+        Wmax:S.Wmax,
+        Gmax:S.Gmax,
+        Rmax:S.Rmax,
+        rhoMean:S.rhoMean,
+        ratioMean:S.ratioMean
+      }, label);
 
-      $("kT").textContent=fmt(Tmean," °C");
-      $("kRH").textContent=fmt(RHmean," %");
-      $("kWind").textContent=(Wmax!=null?Wmax.toFixed(0):'—')+(Gmax!=null?` • raf ${Gmax.toFixed(0)}`:'');
-      $("kPrec").textContent=(Rmax!=null?Rmax.toFixed(2):'—');
-      const kP=$("kP"), kRho=$("kRho"), kRatio=$("kRatio"), kTs=$("kTs");
-      if(kP) kP.textContent=fmt(Pmean," hPa");
-      if(kRho) kRho.textContent=fmt(rhoMean," kg/m³");
-      if(kRatio) kRatio.textContent=(ratioMean?ratioMean.toFixed(3):'—');
-      if(kTs) kTs.textContent=sourceLabel;
-
-      gaugeHalfGradient('gScore', scoreDay, 0, 100, [
+      // jauge score
+      gaugeHalfGradient('gScore', S.scoreDay, 0, 100, [
         [0,  '#ef4444'],
         [25, '#f97316'],
         [50, '#facc15'],
         [75, '#22c55e'],
         [100,'#22c55e']
       ]);
-      const needsRainGear = (Rmax!=null && Rmax>0) || (RHmean!=null && RHmean>90);
+      const needsRain = (S.Rmax!=null && S.Rmax>0) || (S.RHmean!=null && S.RHmean>90);
       let scoreLabel;
-      if(scoreDay>=80 && !needsRainGear) scoreLabel='🟢 Favorables';
-      else if(scoreDay>=80 && needsRainGear) scoreLabel='🟠 Mitigées (pluie possible)';
-      else if(scoreDay>=50) scoreLabel='🟠 Mitigées';
+      if(S.scoreDay>=80 && !needsRain) scoreLabel='🟢 Favorables';
+      else if(S.scoreDay>=80 && needsRain) scoreLabel='🟠 Mitigées (pluie possible)';
+      else if(S.scoreDay>=50) scoreLabel='🟠 Mitigées';
       else scoreLabel='🔴 Défavorable';
-      $("gScoreTxt").textContent = scoreLabel;
+      $("gScoreTxt").textContent=scoreLabel;
 
-      gaugeHalfGradient('gRho', ratioMean, 0.90, 1.08, [
+      // jauge densité
+      gaugeHalfGradient('gRho', S.ratioMean, 0.90, 1.08, [
         [0,  '#22c55e'],
         [25, '#facc15'],
         [50, '#f97316'],
@@ -419,24 +409,27 @@
         [100,'#ef4444']
       ]);
       let rhoLabel='—';
-      if(ratioMean!=null){
-        if(ratioMean < 0.99) rhoLabel='🟢 Air plutôt léger';
-        else if(ratioMean <= 1.03) rhoLabel='🟠 Densité moyenne';
+      if(S.ratioMean!=null){
+        if(S.ratioMean<0.99) rhoLabel='🟢 Air plutôt léger';
+        else if(S.ratioMean<=1.03) rhoLabel='🟠 Densité moyenne';
         else rhoLabel='🔴 Air riche';
       }
-      $("gRhoTxt").textContent = rhoLabel;
+      $("gRhoTxt").textContent=rhoLabel;
 
-      if(events && events.length){
+      // phénomènes
+      if(S.events && S.events.length){
         $("dayMsg").textContent = (effectiveMode==='now'
-          ? 'Phénomènes actuels : '+events.join(', ')
-          : 'Phénomènes attendus : '+events.join(', ')
+          ? 'Phénomènes actuels : '+S.events.join(', ')
+          : 'Phénomènes attendus : '+S.events.join(', ')
         );
       }else{
         $("dayMsg").textContent = (effectiveMode==='now' ? 'Conditions actuelles calmes.' : 'Aucun phénomène notable.');
       }
 
+      // voyants
       renderLamps(S);
-      if(st) st.innerHTML=`✅ Données chargées pour ${effectiveMode==='now'?'maintenant':dateISO} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+
+      st.innerHTML=`✅ Données chargées pour ${effectiveMode==='now'?'maintenant':dateISO} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
       if(mode==='now' && effectiveMode==='day'){ setSingleModePill('day'); }
     }catch(e){
       console.error(e);
@@ -444,51 +437,62 @@
     }
   }
 
-  function debounce(fn,ms){let t; return(...args)=>{clearTimeout(t); t=setTimeout(()=>fn(...args),ms);} }
-
+  // recherche auto
   async function searchCityInto(inputId, resultsId, onPick){
     const q=($(inputId).value||'').trim();
     const cont=$(resultsId); cont.innerHTML='';
-    if(!q){ const h=(resultsId==='results'? $("status"):$("statusRoute")); if(h) h.textContent='Saisissez une ville.'; return; }
-    const holder=(resultsId==='results'? $("status"):$("statusRoute")); if(holder) holder.textContent='Recherche…';
+    const statusTarget = (resultsId==='results') ? $("status") : $("statusRoute");
+    if(!q){ if(statusTarget) statusTarget.textContent='Saisissez une ville.'; return; }
+    if(statusTarget) statusTarget.textContent='Recherche…';
     try{
       const u=new URL('https://geocoding-api.open-meteo.com/v1/search');
       u.searchParams.set('name',q); u.searchParams.set('count',8); u.searchParams.set('language','fr'); u.searchParams.set('format','json');
       const r=await fetch(u.toString()); if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json(); const res=d.results||[];
-      if(res.length===0){ if(holder) holder.innerHTML='<span style="color:#ef4444">Aucun résultat.</span>'; return; }
-      if(holder) holder.textContent=`Résultats : ${res.length}`;
+      if(res.length===0){ if(statusTarget) statusTarget.innerHTML='<span style="color:#ef4444">Aucun résultat.</span>'; return; }
+      if(statusTarget) statusTarget.textContent=`Résultats : ${res.length}`;
       for(const v of res){
         const b=document.createElement('button'); b.className='cityItem';
         const admin=v.admin1?`, ${v.admin1}`:'';
-        b.innerHTML=`<span>${v.name}${admin} — ${v.country_code}</span><span style="font-family:monospace;color:#cbd5e1">${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)}</span>`;
+        b.innerHTML=`<span>${v.name}${admin} — ${v.country_code}</span>
+                     <span style="font-family:monospace;color:#cbd5e1">${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)}</span>`;
         b.onclick=()=>{ onPick(v); cont.innerHTML=''; };
         cont.appendChild(b);
       }
     }catch(e){
       console.error(e);
-      if(holder) holder.innerHTML=`<span style="color:#ef4444">Erreur recherche : ${e.message}</span>`;
+      if(statusTarget) statusTarget.innerHTML=`<span style="color:#ef4444">Erreur recherche : ${e.message}</span>`;
     }
   }
 
-  const acSingle = debounce(()=> searchCityInto('city','results', v=>{
-    $("city").value=v.name;
-    $("lat").value=v.latitude.toFixed(4); $("lon").value=v.longitude.toFixed(4);
-    const d=($("date").value||todayISO());
-    loadCity(v.latitude,v.longitude,d,currentSingleMode);
-  }), 300);
+  // auto-complete ville (single)
+  $("city").addEventListener('input', debounce(()=>{
+    searchCityInto('city','results', v=>{
+      $("city").value=v.name;
+      $("lat").value=v.latitude.toFixed(4);
+      $("lon").value=v.longitude.toFixed(4);
+      const d=$("date").value || todayISO();
+      loadCity(v.latitude,v.longitude,d,currentSingleMode);
+    });
+  }, 300));
 
-  let A=null,B=null;
-  const acA = debounce(()=> searchCityInto('cityA','resultsA', v=>{ 
-    A={name:v.name,lat:v.latitude,lon:v.longitude};
-    $("cityA").value=v.name;
-    autoEvaluate();
-  }), 300);
-  const acB = debounce(()=> searchCityInto('cityB','resultsB', v=>{ 
-    B={name:v.name,lat:v.latitude,lon:v.longitude};
-    $("cityB").value=v.name;
-    autoEvaluate();
-  }), 300);
+  let A=null, B=null;
+
+  $("cityA").addEventListener('input', debounce(()=>{
+    searchCityInto('cityA','resultsA', v=>{
+      A={name:v.name,lat:v.latitude,lon:v.longitude};
+      $("cityA").value=v.name;
+      autoEvaluate();
+    });
+  },300));
+
+  $("cityB").addEventListener('input', debounce(()=>{
+    searchCityInto('cityB','resultsB', v=>{
+      B={name:v.name,lat:v.latitude,lon:v.longitude};
+      $("cityB").value=v.name;
+      autoEvaluate();
+    });
+  },300));
 
   let MODE='single';
   $("tabSingle").addEventListener('click', ()=>{
@@ -514,10 +518,11 @@
       const [dA,dB]=await Promise.all([fetchDay(A.lat,A.lon,date), fetchDay(B.lat,B.lon,date)]);
       const SA=computeDaySummaryFromHourly(dA.hourly||{},date), SB=computeDaySummaryFromHourly(dB.hourly||{},date);
       if(!SA||!SB){ if(info) info.innerHTML='<span style="color:#ef4444">Données indisponibles.</span>'; return; }
-      const rhoAvg = avg2(SA.rhoMean,SB.rhoMean);
-      const ratioAvg = rhoAvg? rhoAvg/1.225 : null;
-      const scoreAvg = avg2(SA.scoreDay,SB.scoreDay);
+      const rhoAvg=avg2(SA.rhoMean,SB.rhoMean);
+      const ratioAvg=rhoAvg?rhoAvg/1.225:null;
+      const scoreAvg=avg2(SA.scoreDay,SB.scoreDay);
 
+      // jauges
       gaugeHalfGradient('gScore', scoreAvg, 0, 100, [
         [0,  '#ef4444'],
         [25, '#f97316'],
@@ -536,15 +541,17 @@
       ]);
       let rhoLabel='—';
       if(ratioAvg!=null){
-        if(ratioAvg < 0.99) rhoLabel='🟢 Air plutôt léger';
-        else if(ratioAvg <= 1.03) rhoLabel='🟠 Densité moyenne';
+        if(ratioAvg<0.99) rhoLabel='🟢 Air plutôt léger';
+        else if(ratioAvg<=1.03) rhoLabel='🟠 Densité moyenne';
         else rhoLabel='🔴 Air riche';
       }
-      $("gRhoTxt").textContent = rhoLabel;
+      $("gRhoTxt").textContent=rhoLabel;
 
+      // phénomènes
       const ev = Array.from(new Set([...(SA.events||[]), ...(SB.events||[])]));
-      $("dayMsg").textContent = ev.length? `Phénomènes sur l’itinéraire : ${ev.join(', ')}` : 'Aucun phénomène notable (itinéraire).';
+      $("dayMsg").textContent = ev.length ? `Phénomènes sur l’itinéraire : ${ev.join(', ')}` : 'Aucun phénomène notable (itinéraire).';
 
+      // voyants
       renderLamps({
         Tmean:avg2(SA.Tmean,SB.Tmean),
         RHmean:avg2(SA.RHmean,SB.RHmean),
@@ -554,10 +561,15 @@
         Vmin:avg2(SA.Vmin,SB.Vmin)
       });
 
+      // détails avec unités
+      const avgWind = Math.round(avg2(SA.Wmax,SB.Wmax) || 0);
+      const avgGust = Math.round(avg2(SA.Gmax,SB.Gmax) || 0);
+      const avgPrec = avg2(SA.Rmax,SB.Rmax);
       $("kT").textContent=fmt(avg2(SA.Tmean,SB.Tmean)," °C");
       $("kRH").textContent=fmt(avg2(SA.RHmean,SB.RHmean)," %");
-      $("kWind").textContent=`${Math.round(avg2(SA.Wmax,SB.Wmax)||0)} • raf ${Math.round(avg2(SA.Gmax,SB.Gmax)||0)}`;
-      $("kPrec").textContent=fmt(avg2(SA.Rmax,SB.Rmax),"");
+      $("kWind").textContent=`${avgWind} km/h • raf ${avgGust} km/h`;
+      $("kPrec").textContent=(avgPrec!=null ? `${avgPrec.toFixed(2)} mm` : '—');
+      $("kTs").textContent = date;
 
       if(info) info.innerHTML=`✅ Itinéraire évalué pour le ${date} — ${A.name} ↔ ${B.name}`;
     }catch(e){
@@ -569,67 +581,52 @@
   function autoEvaluate(){
     if(MODE==='single'){
       const la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
-      const d=($("date").value||todayISO());
+      const d=$("date").value || todayISO();
       if(!isNaN(la)&&!isNaN(lo)) loadCity(la,lo,d,currentSingleMode);
     }else{
-      const d=($("dateRoute").value||todayISO());
+      const d=$("dateRoute").value || todayISO();
       if(A&&B) evaluateRoute(d);
     }
   }
 
-  $("modePill").addEventListener('click', (e)=>{
+  $("modePill").addEventListener('click', e=>{
     if(e.target && e.target.dataset && e.target.dataset.mode){
       setSingleModePill(e.target.dataset.mode);
       autoEvaluate();
     }
   });
 
-  $("city").addEventListener('input', debounce(()=> searchCityInto('city','results', v=>{
-    $("city").value=v.name;
-    $("lat").value=v.latitude.toFixed(4); $("lon").value=v.longitude.toFixed(4);
-    const d=($("date").value||todayISO());
-    loadCity(v.latitude,v.longitude,d,currentSingleMode);
-  }), 300));
-  $("cityA").addEventListener('input', debounce(()=> searchCityInto('cityA','resultsA', v=>{
-    A={name:v.name,lat:v.latitude,lon:v.longitude};
-    $("cityA").value=v.name;
-    autoEvaluate();
-  }), 300));
-  $("cityB").addEventListener('input', debounce(()=> searchCityInto('cityB','resultsB', v=>{
-    B={name:v.name,lat:v.latitude,lon:v.longitude};
-    $("cityB").value=v.name;
-    autoEvaluate();
-  }), 300));
-
-  $("date").addEventListener('change', ()=>autoEvaluate());
-  $("dateRoute").addEventListener('change', ()=>autoEvaluate());
+  $("date").addEventListener('change', autoEvaluate);
+  $("dateRoute").addEventListener('change', autoEvaluate);
 
   $("btnPrimary").addEventListener('click', ()=>{
     if(MODE==='single'){
-      const la=parseFloat($("lat").value), lo=parseFloat($("lon").value); const d=($("date").value||todayISO());
+      const la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
+      const d=$("date").value || todayISO();
       if(isNaN(la)||isNaN(lo)){ $("status").textContent='Renseignez lat/lon ou choisissez une ville.'; return; }
       loadCity(la,lo,d,currentSingleMode);
     }else{
-      const d=($("dateRoute").value||todayISO());
+      const d=$("dateRoute").value || todayISO();
       evaluateRoute(d);
     }
   });
 
   $("btnGeo").addEventListener('click', ()=>{
     const st=$("status");
-    if(!navigator.geolocation){ if(st) st.textContent='Géolocalisation non supportée.'; return; }
-    if(st) st.textContent='Localisation…';
+    if(!navigator.geolocation){ st.textContent='Géolocalisation non supportée.'; return; }
+    st.textContent='Localisation…';
     navigator.geolocation.getCurrentPosition(p=>{
       const {latitude:la,longitude:lo}=p.coords;
       $("lat").value=la.toFixed(4); $("lon").value=lo.toFixed(4);
-      const d=($("date").value||todayISO());
+      const d=$("date").value || todayISO();
       loadCity(la,lo,d,currentSingleMode);
     }, e=>{
-      if(st) st.textContent='Géolocalisation refusée : '+e.message;
+      st.textContent='Géolocalisation refusée : '+e.message;
     }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
   });
 
-  document.addEventListener('DOMContentLoaded', ()=>{
+  // démo par défaut
+  document.addEventListener('DOMContentLoaded',()=>{
     const d=todayISO();
     $("date").value=d;
     $("dateRoute").value=d;
