@@ -8,10 +8,8 @@
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com"/>
   <style>
     :root{
-      --bg:#0b1120; --panel:#101826; --muted:#9fb0c7;
-      --brand:#13b0a6; --brand-ink:#062a2b;
-      --ok:#10b981; --warn:#f6b234; --err:#ef4444;
-      --text:#e5e7eb;
+      --bg:#0b1120; --panel:#101826; --muted:#9fb0c7; --brand:#13b0a6; --brand-ink:#062a2b;
+      --ok:#10b981; --warn:#f6b234; --err:#ef4444; --text:#e5e7eb;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -24,23 +22,12 @@
     .card{background:var(--panel);border:1px solid #ffffff14;border-radius:14px;padding:10px;margin-top:10px}
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
     input{width:100%;padding:10px;border-radius:10px;border:1px solid #ffffff22;background:#0b1220;color:var(--text)}
-    button{border:0;border-radius:10px;padding:10px 12px;font-weight:600;cursor:pointer}
+    button{border:0;border-radius:10px;padding:10px 12px;font-weight:600;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
     .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 160px}
     .grid{display:grid;gap:10px}.three{grid-template-columns:repeat(3,1fr)}
     @media(max-width:900px){.three{grid-template-columns:1fr}}
-    /* tabs */
     .tabs{display:flex;gap:8px}
-    .tabBtn{
-      flex:1;
-      background:#1f2937;
-      color:#e5e7eb;
-      border:1px solid #ffffff08;
-    }
-    .tabBtn.active{
-      background:var(--brand);
-      color:var(--brand-ink);
-      border-color:transparent;
-    }
+    .tabs button{flex:1}
     .results{display:grid;gap:6px;margin-top:6px}
     .cityItem{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:#0b1220;border:1px solid #ffffff14;color:#fff;cursor:pointer}
     .lamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}
@@ -49,29 +36,42 @@
     .on.green{background:#10b981}.on.yellow{background:#f6b234}.on.red{background:#ef4444}
     .muted{color:var(--muted)}
     .stickyBar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;gap:8px;padding:10px;background:var(--bg);border-top:1px solid #ffffff14}
-    .stickyBar button{flex:1;background:var(--brand);color:var(--brand-ink)}
-    /* mode pills */
+    .stickyBar button{flex:1}
     .modepill{display:inline-flex;background:#0b1220;border:1px solid #ffffff1f;border-radius:999px;overflow:hidden;margin-top:6px}
     .modepill button{background:transparent;border:0;padding:6px 12px;font-size:12px;color:#cbd5e1;cursor:pointer}
     .modepill button.active{background:#13b0a6;color:#062a2b;font-weight:600}
-    /* jauges */
-    .gaugesRow{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;justify-content:center}
-    .gBox{flex:0 1 135px;min-width:130px;text-align:left}
+    /* jauges sous les voyants */
+    .gaugesRow{
+      display:flex;
+      gap:6px;             /* réduit */
+      margin-top:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .gBox{
+      flex:0 1 135px;       /* un poil plus petit */
+      min-width:130px;
+      text-align:left;
+    }
     .gBox p{margin:0 0 4px}
-    .gaugeSVG{width:120px;max-width:100%;height:auto;display:block}
+    .gaugeSVG{
+      width:120px;          /* taille réduite */
+      max-width:100%;
+      height:auto;
+      display:block;
+    }
     .guidance{color:#cbd5e1;font-size:12px;margin-top:4px}
-    @media(max-width:360px){
-      .gBox{flex:1 1 100%;display:flex;flex-direction:column;align-items:center;text-align:center}
+    @media(max-width:460px){
+      .gBox{
+        flex:1 1 100%;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+      }
       .gBox p{text-align:center}
       .gaugeSVG{margin:0 auto;}
     }
-    /* Détails en petits cadres */
-    .kpiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:6px}
-    .kpiCard{background:#0b1220;border:1px solid #ffffff10;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;min-height:60px}
-    .kpiLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-    .kpiValue{font-size:1.15rem;font-weight:700}
-    .kpiSmall{font-size:10px;color:#6b7280}
-    .hide{display:none!important}
   </style>
 </head>
 <body>
@@ -80,21 +80,20 @@
     <img src="ridescore-logo.png" alt="RideScore, météo moto">
     <div>
       <h1>RideScore</h1>
-      <p>La météo pensée pour les motards</p>
+      <p>Densité de l’air, score météo, voyants</p>
     </div>
   </div>
 </header>
 
 <main class="container">
-  <!-- Sélection -->
+  <!-- 1. sélection -->
   <section class="card">
     <h2 style="margin:0 0 6px">Ville ou itinéraire</h2>
     <div class="tabs">
-      <button id="tabSingle" class="tabBtn active" aria-selected="true">Ville</button>
-      <button id="tabRoute" class="tabBtn" aria-selected="false">Itinéraire</button>
+      <button id="tabSingle" aria-selected="true">Ville</button>
+      <button id="tabRoute" aria-selected="false" style="background:#1f2937;color:#e5e7eb">Itinéraire</button>
     </div>
 
-    <!-- mode ville -->
     <div id="panelSingle" style="margin-top:8px">
       <div class="modepill" id="modePill">
         <button type="button" data-mode="day" class="active">Jour (moy.)</button>
@@ -114,20 +113,21 @@
       <details>
         <summary>Options avancées</summary>
         <div class="row" style="margin-top:6px">
-          <div><label for="lat">Latitude</label><input id="lat" type="number" step="0.0001" placeholder="48.8566"/></div>
-          <div><label for="lon">Longitude</label><input id="lon" type="number" step="0.0001" placeholder="2.3522"/></div>
+          <div>
+            <label for="lat">Latitude</label>
+            <input id="lat" type="number" step="0.0001" placeholder="48.8566"/>
+          </div>
+          <div>
+            <label for="lon">Longitude</label>
+            <input id="lon" type="number" step="0.0001" placeholder="2.3522"/>
+          </div>
         </div>
       </details>
       <p id="status" class="muted" style="margin:6px 0 0;"></p>
     </div>
 
-    <!-- mode itinéraire -->
     <div id="panelRoute" style="margin-top:8px;display:none">
-      <div class="modepill" id="modePillRoute">
-        <button type="button" data-mode="day" class="active">Jour (moy.)</button>
-        <button type="button" data-mode="now">Temps réel</button>
-      </div>
-      <div class="grid three" style="margin-top:6px">
+      <div class="grid three">
         <div>
           <label for="cityA">Ville départ</label>
           <input id="cityA" autocomplete="off"/>
@@ -147,7 +147,7 @@
     </div>
   </section>
 
-  <!-- Voyants + jauges -->
+  <!-- 2. voyants + jauges -->
   <section class="card">
     <div id="lamps" class="lamps"></div>
     <div class="gaugesRow">
@@ -164,470 +164,14 @@
     </div>
   </section>
 
-  <!-- Phénomènes -->
+  <!-- 3. phénomènes -->
   <section class="card">
     <h2 style="margin:0 0 6px">Phénomènes du jour</h2>
     <p id="dayMsg" class="muted">—</p>
   </section>
 
-  <!-- Détails -->
+  <!-- 4. KPIs -->
   <section class="card">
     <h2 style="margin:0 0 6px">Détails</h2>
-    <div class="kpiGrid">
-      <div class="kpiCard"><div class="kpiLabel">Température</div><div class="kpiValue" id="kT">—</div></div>
-      <div class="kpiCard"><div class="kpiLabel">Humidité</div><div class="kpiValue" id="kRH">—</div></div>
-      <div class="kpiCard"><div class="kpiLabel">Vent / Rafales</div><div class="kpiValue" id="kWind">—</div></div>
-      <div class="kpiCard"><div class="kpiLabel">Précipitation</div><div class="kpiValue" id="kPrec">—</div></div>
-      <div class="kpiCard hide"><div class="kpiLabel">Pression</div><div class="kpiValue" id="kP">—</div></div>
-      <div class="kpiCard hide"><div class="kpiLabel">ρ (kg/m³)</div><div class="kpiValue" id="kRho">—</div></div>
-      <div class="kpiCard hide"><div class="kpiLabel">ρ/ρ₀</div><div class="kpiValue" id="kRatio">—</div></div>
-      <div class="kpiCard hide"><div class="kpiLabel">Source</div><div class="kpiValue kpiSmall" id="kTs">—</div></div>
-    </div>
-  </section>
-</main>
-
-<div class="stickyBar">
-  <button id="btnGeo">📍 Ma position</button>
-  <button id="btnPrimary">🔄 Évaluer</button>
-</div>
-
-<script>
-(function(){
-  'use strict';
-  const $=id=>document.getElementById(id);
-  const todayISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
-  const isToday=i=>i===todayISO();
-  const fmt=(v,u="")=>(v==null||Number.isNaN(+v))?"—":`${(+v).toFixed(2)}${u}`;
-  const polar=(cx,cy,r,a)=>{const rad=a*Math.PI/180;return{x:cx+r*Math.cos(rad),y:cy+r*Math.sin(rad)}};
-  const debounce=(fn,ms)=>{let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),ms);};};
-
-  // densité
-  function rhoFromTRP(T,RH,p){
-    if([T,RH,p].some(v=>v==null||isNaN(v))) return null;
-    const Tk=T+273.15;
-    const es=6.112*Math.exp(17.62*T/(243.12+T));
-    const e=(RH/100)*es;
-    const pd=p-e;
-    const R=8.31446, Md=0.0289652, Mv=0.018016;
-    return ((pd*100)*Md+(e*100)*Mv)/(R*Tk);
-  }
-
-  // jauge
-  function gaugeHalfGradient(elId, value, vMin, vMax, stops){
-    const el=$(elId); if(!el) return;
-    if(value==null||isNaN(value)){el.innerHTML='—';return}
-    const t=(Math.min(vMax,Math.max(vMin,value))-vMin)/(vMax-vMin);
-    const size=160,cx=size/2,cy=size/2,R=70,arc=Math.PI*R;
-    const start=polar(cx,cy,R,-90),end=polar(cx,cy,R,90);
-    const angle=-90+180*t,tip=polar(cx,cy,R-10,angle);
-    const gid='g_'+elId;
-    const stopsSvg=stops.map(([o,c])=>`<stop offset="${o}%" stop-color="${c}"/>`).join('');
-    const visibleLen=Math.max(0.5,t*arc);
-    el.innerHTML=`<svg class="gaugeSVG" viewBox="0 0 ${size} ${size}">
-      <defs><linearGradient id="${gid}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}">${stopsSvg}</linearGradient></defs>
-      <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="10"/>
-      <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="url(#${gid})" stroke-width="10"
-        stroke-dasharray="${visibleLen} ${arc-visibleLen}"/>
-      <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="${cx}" cy="${cy}" r="4" fill="#e5e7eb"/>
-    </svg>`;
-  }
-
-  // scoring
-  const scoreFromTemperature=T=> (T==null||isNaN(T))?12: (T>=10&&T<=25?25:((T>=5&&T<10)||(T>25&&T<=30)?15:5));
-  const scoreFromRain=p=> (p==null||isNaN(p))?12:(p===0?15:(p<1?8:0));
-  const scoreFromWind=(w,g)=>{const v=Math.max(w||0,g||0);return v<25?20:(v<50?10:0)};
-  const scoreFromRoadRisk=(T,RH,p)=> (T!=null&&T<=0&&(p>0||(RH!=null&&RH>80)))?0:((p>0&&p<1)||(RH!=null&&RH>90)?5:10);
-  const scoreFromBlackIce=(T,RH,p)=> (T==null||isNaN(T))?6: (T<=0&&(p>0||(RH!=null&&RH>=85))?0:(T<=2&&(p>0||(RH!=null&&RH>=90))?4:10));
-  const scoreFromFog=(vis,RH)=> (vis==null||isNaN(vis))?((RH!=null&&RH>95)?2:5):(vis<200?0:(vis<1000?2:(vis<4000?4:5)));
-  const scoreFromDensity=r=> (r==null||isNaN(r))?10: (r>=0.95&&r<=1.05?15:((r>=0.93&&r<0.95)||(r>1.05&&r<=1.07)?8:3));
-  function scoreHour({T,RH,P,W,G,R,V}){
-    const rho=rhoFromTRP(T,RH,P); const ratio=rho?rho/1.225:null;
-    return Math.round(Math.min(100,Math.max(0,
-      scoreFromTemperature(T)+scoreFromRain(R)+scoreFromWind(W,G)+scoreFromRoadRisk(T,RH,R)+scoreFromDensity(ratio)+scoreFromBlackIce(T,RH,R)+scoreFromFog(V,RH)
-    )));
-  }
-
-  function avgOnIdx(arr, idxs){ if(!arr) return null; let s=0,c=0; for(const i of idxs){ const v=arr[i]; if(v!=null){s+=v;c++;}} return c? s/c : null; }
-  const avg2=(a,b)=>a==null?b:(b==null?a:(a+b)/2);
-
-  function computeDaySummaryFromHourly(H, dateISO){
-    const times=H.time||[]; const idx=[];
-    for(let i=0;i<times.length;i++){ if(String(times[i]).startsWith(dateISO)) idx.push(i); }
-    if(idx.length===0) return null;
-    let maxWind=0,maxGust=0,maxPrec=0,minTemp=Infinity,minVis=Infinity,maxRH=0;
-    let rhoSum=0,rhoCount=0; let worstScore=100;
-    for(const i of idx){
-      const T=H.temperature_2m?.[i];
-      const RH=H.relative_humidity_2m?.[i];
-      const P=H.surface_pressure?.[i];
-      const W=H.wind_speed_10m?.[i];
-      const G=H.wind_gusts_10m?.[i];
-      const R=H.precipitation?.[i];
-      const V=H.visibility?.[i];
-      const r=rhoFromTRP(T,RH,P); if(r!=null){rhoSum+=r; rhoCount++;}
-      const s=scoreHour({T,RH,P,W,G,R,V}); worstScore=Math.min(worstScore,s);
-      maxWind=Math.max(maxWind,W||0); maxGust=Math.max(maxGust,G||0); maxPrec=Math.max(maxPrec,R||0);
-      if(T!=null) minTemp=Math.min(minTemp,T);
-      if(V!=null) minVis=Math.min(minVis,V);
-      if(RH!=null) maxRH=Math.max(maxRH,RH);
-    }
-    const rhoMean=rhoCount?(rhoSum/rhoCount):null;
-    const ratioMean=rhoMean?rhoMean/1.225:null;
-    const events=[];
-    if (maxPrec > 0) events.push('averses');
-    if (maxWind >= 25 || maxGust >= 50) events.push('vent');
-    if (minTemp <= 0) events.push('risque de verglas');
-    if ((minVis < 1000) || maxRH > 95) events.push('brouillard');
-    const Tmean=avgOnIdx(H.temperature_2m,idx);
-    const RHmean=avgOnIdx(H.relative_humidity_2m,idx);
-    const Pmean=avgOnIdx(H.surface_pressure,idx);
-    return {rhoMean,ratioMean,scoreDay:worstScore,events,Tmean,RHmean,Pmean,Wmax:maxWind,Gmax:maxGust,Rmax:maxPrec,Vmin:(minVis<Infinity?minVis:null)};
-  }
-
-  async function fetchCurrent(lat,lon){
-    const url=new URL('https://api.open-meteo.com/v1/meteofrance');
-    url.searchParams.set('latitude',lat);
-    url.searchParams.set('longitude',lon);
-    url.searchParams.set('timezone','auto');
-    url.searchParams.set('current',"temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_gusts_10m,precipitation,visibility");
-    const r=await fetch(url.toString());
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return r.json();
-  }
-  function computeCurrentSummary(cur){
-    if(!cur) return null;
-    const T=cur.temperature_2m,RH=cur.relative_humidity_2m,P=cur.surface_pressure;
-    const W=cur.wind_speed_10m,G=cur.wind_gusts_10m,R=cur.precipitation,V=cur.visibility;
-    const rho=rhoFromTRP(T,RH,P); const ratio=rho?rho/1.225:null;
-    const score=scoreHour({T,RH,P,W,G,R,V});
-    const events=[];
-    if(R>0) events.push('averses');
-    if(W>=25 || G>=50) events.push('vent');
-    if(T<=0) events.push('risque de verglas');
-    if((V!=null && V<1000) || (RH!=null && RH>95)) events.push('brouillard');
-    return {rhoMean:rho,ratioMean:ratio,scoreDay:score,events,Tmean:T,RHmean:RH,Pmean:P,Wmax:W,Gmax:G,Rmax:R,Vmin:V,ts:cur.time};
-  }
-
-  function renderLamps({Tmean,RHmean,Rmax,Wmax,Gmax,Vmin}){
-    const cont=$("lamps"); if(!cont) return;
-    const T=Tmean,RH=RHmean,precip=Rmax,wind=Wmax,gust=Gmax,vis=Vmin;
-    const v=Math.max(wind||0,gust||0);
-    const verglas=(T!=null&&T<=1)&&((precip!=null&&precip>0)||(RH!=null&&RH>=90));
-    const fogDense=(vis!=null&&vis<200)||(RH!=null&&RH>98);
-    const fog=fogDense||(vis!=null&&vis<1000)||(RH!=null&&RH>95);
-    const gantsHiver=(T!=null && T<10);
-    const vesteChaude=(T!=null && T<15);
-    const lamps=[
-      {label:'Gants hiver', icon:'🧤', on:gantsHiver, tone:(T<5?'red':(T<10?'yellow':'green'))},
-      {label:'Gants été', icon:'🧤', on:!gantsHiver, tone:(T>30?'red':(T>25?'yellow':'green'))},
-      {label:'Veste chaude', icon:'🧥', on:vesteChaude, tone:(T<8?'red':(T<15?'yellow':'green'))},
-      {label:'Veste légère', icon:'🧥', on:!vesteChaude, tone:(T>28?'red':(T>20?'yellow':'green'))},
-      {label:'Pantalon pluie', icon:'👖', on:((precip!=null&&precip>0)||(RH!=null&&RH>80)), tone:(precip>=1?'red':'yellow')},
-      {label:'Chaussures étanches', icon:'👢', on:(precip!=null&&precip>=1), tone:(precip>=2?'red':'yellow')},
-      {label:'Attention vent', icon:'💨', on:(v>=25), tone:(v>50?'red':'yellow')},
-      {label:'Risque verglas', icon:'🧊', on:verglas, tone:(T!=null&&T<=0)?'red':'yellow'},
-      {label:'Brouillard', icon:'🌫️', on:fog, tone:(fogDense?'red':'yellow')},
-      {label:'Visière claire', icon:'🕶️', on:((RH!=null&&RH>95)||(precip!=null&&precip>0)), tone:'yellow'}
-    ];
-    cont.innerHTML=lamps.map(l=>`<div class="lamp"><span class="led ${l.on?('on '+l.tone):''}"></span><span>${l.icon} ${l.label}</span></div>`).join('');
-  }
-
-  async function fetchDay(lat,lon,dateISO){
-    const url=new URL('https://api.open-meteo.com/v1/meteofrance');
-    url.searchParams.set('latitude',lat);
-    url.searchParams.set('longitude',lon);
-    url.searchParams.set('timezone','auto');
-    url.searchParams.set('hourly',"temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_gusts_10m,precipitation,visibility");
-    url.searchParams.set('start_date',dateISO);
-    url.searchParams.set('end_date',dateISO);
-    const r=await fetch(url.toString());
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return r.json();
-  }
-
-  let currentSingleMode='day';
-  let currentRouteMode='day';
-
-  function setSingleModePill(mode){
-    currentSingleMode=mode;
-    const pill=$("modePill");
-    pill.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
-  }
-  function setRouteModePill(mode){
-    currentRouteMode=mode;
-    const pill=$("modePillRoute");
-    pill.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
-  }
-
-  function updateDetailsUI(S,label){
-    $("kT").textContent=fmt(S.Tmean," °C");
-    $("kRH").textContent=fmt(S.RHmean," %");
-    $("kWind").textContent=(S.Wmax!=null?`${S.Wmax.toFixed(0)} km/h`:'—')+(S.Gmax!=null?` • raf ${S.Gmax.toFixed(0)} km/h`:'');
-    $("kPrec").textContent=(S.Rmax!=null?`${S.Rmax.toFixed(2)} mm`:'—');
-    $("kP").textContent=fmt(S.Pmean," hPa");
-    $("kRho").textContent=fmt(S.rhoMean," kg/m³");
-    $("kRatio").textContent=(S.ratioMean?S.ratioMean.toFixed(3):'—');
-    $("kTs").textContent=label||'—';
-  }
-
-  async function loadCity(lat,lon,dateISO,mode){
-    const st=$("status"); if(st) st.textContent='Chargement…';
-    try{
-      const m=(mode==='now' && !isToday(dateISO))?'day':mode;
-      let S,label;
-      if(m==='now'){
-        const d=await fetchCurrent(lat,lon);
-        S=computeCurrentSummary(d.current); label="Temps réel";
-      }else{
-        const d=await fetchDay(lat,lon,dateISO);
-        S=computeDaySummaryFromHourly(d.hourly||{},dateISO); label=dateISO;
-      }
-      if(!S){ st.innerHTML='<span style="color:#ef4444">Pas de données.</span>'; return; }
-
-      updateDetailsUI(S,label);
-
-      gaugeHalfGradient('gScore', S.scoreDay, 0, 100, [
-        [0,'#ef4444'],[25,'#f97316'],[50,'#facc15'],[75,'#22c55e'],[100,'#22c55e']
-      ]);
-      const needsRain=(S.Rmax!=null&&S.Rmax>0)||(S.RHmean!=null&&S.RHmean>90);
-      let scoreLabel;
-      if(S.scoreDay>=80 && !needsRain) scoreLabel='🟢 Favorables';
-      else if(S.scoreDay>=80 && needsRain) scoreLabel='🟠 Mitigées (pluie possible)';
-      else if(S.scoreDay>=50) scoreLabel='🟠 Mitigées';
-      else scoreLabel='🔴 Défavorable';
-      $("gScoreTxt").textContent=scoreLabel;
-
-      gaugeHalfGradient('gRho', S.ratioMean, 0.90, 1.08, [
-        [0,'#22c55e'],[25,'#facc15'],[50,'#f97316'],[75,'#ef4444'],[100,'#ef4444']
-      ]);
-      let rhoLabel='—';
-      if(S.ratioMean!=null){
-        if(S.ratioMean<0.99) rhoLabel='🟢 Air plutôt léger';
-        else if(S.ratioMean<=1.03) rhoLabel='🟠 Densité moyenne';
-        else rhoLabel='🔴 Air riche';
-      }
-      $("gRhoTxt").textContent=rhoLabel;
-
-      if(S.events && S.events.length){
-        $("dayMsg").textContent=(m==='now'?'Phénomènes actuels : ':'Phénomènes attendus : ')+S.events.join(', ');
-      }else{
-        $("dayMsg").textContent = (m==='now' ? 'Conditions actuelles calmes.' : 'Aucun phénomène notable.');
-      }
-
-      renderLamps(S);
-      st.innerHTML=`✅ Données chargées pour ${m==='now'?'maintenant':dateISO} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-
-      if(mode==='now' && m==='day') setSingleModePill('day');
-    }catch(e){
-      console.error(e);
-      $("status").innerHTML=`<span style="color:#ef4444">Échec : ${e.message}</span>`;
-    }
-  }
-
-  // recherche ville
-  async function searchCityInto(inputId, resultsId, onPick){
-    const q=($(inputId).value||'').trim();
-    const cont=$(resultsId); cont.innerHTML='';
-    const statusTarget = (resultsId==='results') ? $("status") : $("statusRoute");
-    if(!q){ if(statusTarget) statusTarget.textContent='Saisissez une ville.'; return; }
-    if(statusTarget) statusTarget.textContent='Recherche…';
-    try{
-      const u=new URL('https://geocoding-api.open-meteo.com/v1/search');
-      u.searchParams.set('name',q);u.searchParams.set('count',8);u.searchParams.set('language','fr');u.searchParams.set('format','json');
-      const r=await fetch(u.toString()); if(!r.ok) throw new Error('HTTP '+r.status);
-      const d=await r.json(); const res=d.results||[];
-      if(res.length===0){ statusTarget.innerHTML='<span style="color:#ef4444">Aucun résultat.</span>'; return; }
-      statusTarget.textContent=`Résultats : ${res.length}`;
-      for(const v of res){
-        const b=document.createElement('button'); b.className='cityItem';
-        const admin=v.admin1?`, ${v.admin1}`:'';
-        b.innerHTML=`<span>${v.name}${admin} — ${v.country_code}</span><span style="font-family:monospace;color:#cbd5e1">${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)}</span>`;
-        b.onclick=()=>{ onPick(v); cont.innerHTML=''; };
-        cont.appendChild(b);
-      }
-    }catch(e){
-      console.error(e);
-      statusTarget.innerHTML=`<span style="color:#ef4444">Erreur recherche : ${e.message}</span>`;
-    }
-  }
-
-  $("city").addEventListener('input', debounce(()=> {
-    searchCityInto('city','results', v=>{
-      $("city").value=v.name;
-      $("lat").value=v.latitude.toFixed(4);
-      $("lon").value=v.longitude.toFixed(4);
-      const d=$("date").value||todayISO();
-      loadCity(v.latitude,v.longitude,d,currentSingleMode);
-    });
-  },300));
-
-  let A=null,B=null;
-
-  $("cityA").addEventListener('input', debounce(()=> {
-    searchCityInto('cityA','resultsA', v=>{
-      A={name:v.name,lat:v.latitude,lon:v.longitude};
-      $("cityA").value=v.name;
-      autoEvaluate();
-    });
-  },300));
-
-  $("cityB").addEventListener('input', debounce(()=> {
-    searchCityInto('cityB','resultsB', v=>{
-      B={name:v.name,lat:v.latitude,lon:v.longitude};
-      $("cityB").value=v.name;
-      autoEvaluate();
-    });
-  },300));
-
-  let MODE='single';
-  $("tabSingle").addEventListener('click', ()=>{
-    MODE='single';
-    $("panelSingle").style.display='block';
-    $("panelRoute").style.display='none';
-    $("tabSingle").classList.add('active');
-    $("tabRoute").classList.remove('active');
-  });
-  $("tabRoute").addEventListener('click', ()=>{
-    MODE='route';
-    $("panelRoute").style.display='block';
-    $("panelSingle").style.display='none';
-    $("tabRoute").classList.add('active');
-    $("tabSingle").classList.remove('active');
-  });
-
-  $("modePill").addEventListener('click', e=>{
-    if(e.target && e.target.dataset && e.target.dataset.mode){
-      setSingleModePill(e.target.dataset.mode);
-      autoEvaluate();
-    }
-  });
-  $("modePillRoute").addEventListener('click', e=>{
-    if(e.target && e.target.dataset && e.target.dataset.mode){
-      setRouteModePill(e.target.dataset.mode);
-      autoEvaluate();
-    }
-  });
-
-  async function evaluateRoute(date){
-    const info=$("statusRoute");
-    if(!A||!B){ info.innerHTML='<span style="color:#ef4444">Choisissez départ et arrivée.</span>'; return; }
-    info.textContent='Calcul itinéraire…';
-    try{
-      const mode=currentRouteMode;
-      const effectiveMode = (mode==='now' && !isToday(date)) ? 'day' : mode;
-      let SA, SB, label;
-      if(effectiveMode==='now'){
-        const [ca,cb] = await Promise.all([fetchCurrent(A.lat,A.lon), fetchCurrent(B.lat,B.lon)]);
-        SA = computeCurrentSummary(ca.current);
-        SB = computeCurrentSummary(cb.current);
-        label='Temps réel (itinéraire)';
-      }else{
-        const [da,db] = await Promise.all([fetchDay(A.lat,A.lon,date), fetchDay(B.lat,B.lon,date)]);
-        SA = computeDaySummaryFromHourly(da.hourly||{},date);
-        SB = computeDaySummaryFromHourly(db.hourly||{},date);
-        label=date+' (itinéraire)';
-      }
-      if(!SA||!SB){ info.innerHTML='<span style="color:#ef4444">Données indisponibles.</span>'; return; }
-
-      const rhoAvg=avg2(SA.rhoMean,SB.rhoMean);
-      const ratioAvg=rhoAvg?rhoAvg/1.225:null;
-      const scoreAvg=avg2(SA.scoreDay,SB.scoreDay);
-
-      gaugeHalfGradient('gScore', scoreAvg, 0, 100, [
-        [0,'#ef4444'],[25,'#f97316'],[50,'#facc15'],[75,'#22c55e'],[100,'#22c55e']
-      ]);
-      $("gScoreTxt").textContent = (scoreAvg>=80? '🟢 Favorables (itinéraire)' : (scoreAvg>=50? '🟠 Mitigées (itinéraire)' : '🔴 Défavorable (itinéraire)'));
-
-      gaugeHalfGradient('gRho', ratioAvg, 0.90, 1.08, [
-        [0,'#22c55e'],[25,'#facc15'],[50,'#f97316'],[75,'#ef4444'],[100,'#ef4444']
-      ]);
-      let rhoLabel='—';
-      if(ratioAvg!=null){
-        if(ratioAvg<0.99) rhoLabel='🟢 Air plutôt léger';
-        else if(ratioAvg<=1.03) rhoLabel='🟠 Densité moyenne';
-        else rhoLabel='🔴 Air riche';
-      }
-      $("gRhoTxt").textContent=rhoLabel;
-
-      const ev = Array.from(new Set([...(SA.events||[]), ...(SB.events||[])]));
-      $("dayMsg").textContent = ev.length ? `Phénomènes sur l’itinéraire : ${ev.join(', ')}` : 'Aucun phénomène notable (itinéraire).';
-
-      renderLamps({
-        Tmean:avg2(SA.Tmean,SB.Tmean),
-        RHmean:avg2(SA.RHmean,SB.RHmean),
-        Rmax:avg2(SA.Rmax,SB.Rmax),
-        Wmax:avg2(SA.Wmax,SB.Wmax),
-        Gmax:avg2(SA.Gmax,SB.Gmax),
-        Vmin:avg2(SA.Vmin,SB.Vmin)
-      });
-
-      // détails avec unités
-      const avgWind = Math.round(avg2(SA.Wmax,SB.Wmax) || 0);
-      const avgGust = Math.round(avg2(SA.Gmax,SB.Gmax) || 0);
-      const avgPrec = avg2(SA.Rmax,SB.Rmax);
-      $("kT").textContent=fmt(avg2(SA.Tmean,SB.Tmean)," °C");
-      $("kRH").textContent=fmt(avg2(SA.RHmean,SB.RHmean)," %");
-      $("kWind").textContent=`${avgWind} km/h • raf ${avgGust} km/h`;
-      $("kPrec").textContent=(avgPrec!=null ? `${avgPrec.toFixed(2)} mm` : '—');
-      $("kTs").textContent=label;
-
-      info.innerHTML=`✅ Itinéraire évalué pour ${label}`;
-      if(mode==='now' && effectiveMode==='day') setRouteModePill('day');
-    }catch(e){
-      console.error(e);
-      $("statusRoute").innerHTML=`<span style="color:#ef4444">Échec : ${e.message}</span>`;
-    }
-  }
-
-  function autoEvaluate(){
-    if(MODE==='single'){
-      const la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
-      const d=$("date").value||todayISO();
-      if(!isNaN(la)&&!isNaN(lo)) loadCity(la,lo,d,currentSingleMode);
-    }else{
-      const d=$("dateRoute").value||todayISO();
-      if(A&&B) evaluateRoute(d);
-    }
-  }
-
-  $("date").addEventListener('change', autoEvaluate);
-  $("dateRoute").addEventListener('change', autoEvaluate);
-
-  $("btnPrimary").addEventListener('click', ()=>{
-    if(MODE==='single'){
-      const la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
-      const d=$("date").value||todayISO();
-      if(isNaN(la)||isNaN(lo)){ $("status").textContent='Renseignez lat/lon ou choisissez une ville.'; return; }
-      loadCity(la,lo,d,currentSingleMode);
-    }else{
-      const d=$("dateRoute").value||todayISO();
-      evaluateRoute(d);
-    }
-  });
-
-  $("btnGeo").addEventListener('click', ()=>{
-    const st=$("status");
-    if(!navigator.geolocation){ st.textContent='Géolocalisation non supportée.'; return; }
-    st.textContent='Localisation…';
-    navigator.geolocation.getCurrentPosition(p=>{
-      const la=p.coords.latitude, lo=p.coords.longitude;
-      $("lat").value=la.toFixed(4); $("lon").value=lo.toFixed(4);
-      const d=$("date").value||todayISO();
-      loadCity(la,lo,d,currentSingleMode);
-    }, e=>{ st.textContent='Géolocalisation refusée : '+e.message; }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
-  });
-
-  // Init
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const d=todayISO();
-    $("date").value=d; $("dateRoute").value=d;
-    const la=48.8566, lo=2.3522;
-    $("lat").value=la.toFixed(4); $("lon").value=lo.toFixed(4);
-    $("status").textContent='🟢 Démo : Paris chargé (moyenne journée).';
-    loadCity(la,lo,d,'day');
-  });
-})();
-</script>
-</body>
-</html>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+      <div class="kpi"><div class="label">
