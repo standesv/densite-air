@@ -200,10 +200,13 @@
     return ((pd*100)*Md+(e*100)*Mv)/(R*T_K);
   }
 
-  // ✅ jauge RESTAURÉE (celle qui fonctionnait)
-  function gaugeHalfGradient(elId, value, vMin, vMax, stops){
+  // Jauge semi-circulaire SIMPLE (une seule couleur, cohérente avec le niveau)
+  function gaugeHalf(elId, value, vMin, vMax, color){
     const el=$(elId); if(!el) return;
-    if(value==null||isNaN(value)){ el.innerHTML='<div class="guidance">—</div>'; return; }
+    if(value==null||isNaN(value)){
+      el.innerHTML='<div class="guidance">—</div>';
+      return;
+    }
     const t=(clamp(value,vMin,vMax)-vMin)/(vMax-vMin);
     const size=200, cx=size/2, cy=size/2, R=88;
     const arc=Math.PI*R;
@@ -211,19 +214,20 @@
     const end=polar(cx,cy,R,90);
     const ang=-90+180*t;
     const tip=polar(cx,cy,R-10,ang);
-    const gid='g_'+elId;
-    const stopsSvg=stops.map(([off,col])=>`<stop offset="${off}%" stop-color="${col}"/>`).join('');
+
     el.innerHTML=`
       <svg class="gaugeSVG" viewBox="0 0 ${size} ${size}">
-        <defs>
-          <linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="0%">
-            ${stopsSvg}
-          </linearGradient>
-        </defs>
-        <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="12"/>
-        <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}" fill="none" stroke="url(#${gid})" stroke-width="12"
-              stroke-dasharray="${Math.max(1,arc)}" stroke-dashoffset="${(1-t)*arc}"/>
-        <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
+        <!-- fond -->
+        <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
+              fill="none" stroke="rgba(255,255,255,.18)" stroke-width="12"/>
+        <!-- arc coloré -->
+        <path d="M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}"
+              fill="none" stroke="${color}" stroke-width="12"
+              stroke-dasharray="${Math.max(1,arc)}"
+              stroke-dashoffset="${(1-t)*arc}"/>
+        <!-- aiguille -->
+        <line x1="${cx}" y1="${cy}" x2="${tip.x}" y2="${tip.y}"
+              stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
         <circle cx="${cx}" cy="${cy}" r="5" fill="#e5e7eb"/>
       </svg>
     `;
@@ -237,6 +241,7 @@
   const scoreFromBlackIce=(T,RH,p)=> (T==null||isNaN(T))?6: (T<=0&&(p>0||(RH!=null&&RH>=85))?0:(T<=2&&(p>0||(RH!=null&&RH>=90))?4:10));
   const scoreFromFog=(vis,RH)=> (vis==null||isNaN(vis))?((RH!=null&&RH>95)?2:5):(vis<200?0:(vis<1000?2:(vis<4000?4:5)));
   const scoreFromDensity=r=> (r==null||isNaN(r))?10: (r>=0.95&&r<=1.05?15:((r>=0.93&&r<0.95)||(r>1.05&&r<=1.07)?8:3));
+
   function scoreHour({T,RH,P,W,G,R,V}){
     const rho=rhoFromTRP(T,RH,P); const ratio=rho?rho/1.225:null;
     return Math.round(Math.min(100,Math.max(0,
@@ -286,11 +291,12 @@
     url.searchParams.set('latitude',lat);
     url.searchParams.set('longitude',lon);
     url.searchParams.set('timezone','auto');
-    url.searchParams.set('current',"temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_gusts_10m,precipitation,visibility");
+    url.searchParams.set('current',"temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,precipitation,visibility");
     const r=await fetch(url.toString());
     if(!r.ok) throw new Error('HTTP '+r.status);
     return r.json();
   }
+
   function computeCurrentSummary(cur){
     if(!cur) return null;
     const T=cur.temperature_2m,RH=cur.relative_humidity_2m,P=cur.surface_pressure;
@@ -360,8 +366,53 @@
     $("kT").textContent=fmt(S.Tmean," °C");
     $("kRH").textContent=fmt(S.RHmean," %");
     $("kWind").textContent=(S.Wmax!=null?`${S.Wmax.toFixed(0)} km/h`:'—')+(S.Gmax!=null?` • raf ${S.Gmax.toFixed(0)} km/h`:'');
+
     $("kPrec").textContent=(S.Rmax!=null?`${S.Rmax.toFixed(2)} mm`:'—');
     $("kTs").textContent=label||'—';
+  }
+
+  function renderGaugesFromSummary(S, modeLabel, isRoute=false){
+    // SCORE MÉTÉO : 0–49 rouge, 50–79 orange, 80–100 vert
+    let scoreColor='#ef4444';
+    if(S.scoreDay>=80) scoreColor='#22c55e';
+    else if(S.scoreDay>=50) scoreColor='#f97316';
+
+    gaugeHalf('gScore', S.scoreDay, 0, 100, scoreColor);
+
+    $("gScoreTxt").textContent =
+      S.scoreDay>=80 ? (isRoute ? '🟢 Favorables (itinéraire)' : '🟢 Conditions favorables')
+      : S.scoreDay>=50 ? (isRoute ? '🟠 Mitigées (itinéraire)' : '🟠 Conditions mitigées')
+      : (isRoute ? '🔴 Défavorable (itinéraire)' : '🔴 Conditions défavorables');
+
+    // DENSITÉ DE L’AIR : léger vert, moyen jaune, dense rouge
+    const ratio=S.ratioMean;
+    let rhoColor='rgba(148,163,184,0.7)';
+    if(ratio!=null){
+      if(ratio<0.99) rhoColor='#22c55e';
+      else if(ratio<=1.03) rhoColor='#facc15';
+      else rhoColor='#ef4444';
+    }
+    gaugeHalf('gRho', ratio, 0.90, 1.08, rhoColor);
+
+    let rhoLabel='—';
+    if(ratio!=null){
+      if(ratio<0.99) rhoLabel='🟢 Air plutôt léger';
+      else if(ratio<=1.03) rhoLabel='🟡 Densité moyenne';
+      else rhoLabel='🔴 Air dense / riche';
+    }
+    $("gRhoTxt").textContent=rhoLabel;
+
+    if(S.events && S.events.length){
+      $("dayMsg").textContent=(modeLabel==='now'
+        ? (isRoute?'Phénomènes sur l’itinéraire : ':'Phénomènes actuels : ')
+        : (isRoute?'Phénomènes sur l’itinéraire : ':'Phénomènes attendus : ')
+      )+S.events.join(', ');
+    }else{
+      $("dayMsg").textContent=(modeLabel==='now'
+        ? (isRoute?'Aucun phénomène notable (itinéraire).':'Conditions actuelles calmes.')
+        : (isRoute?'Aucun phénomène notable (itinéraire).':'Aucun phénomène notable.')
+      );
+    }
   }
 
   async function loadCity(lat,lon,dateISO,mode){
@@ -381,39 +432,9 @@
       if(!S){ st.innerHTML='<span style="color:#ef4444">Pas de données.</span>'; return; }
 
       updateDetailsUI(S,label);
-
-      // Score météo RESTAURÉ : rouge -> orange -> vert
-      gaugeHalfGradient('gScore', S.scoreDay, 0, 100, [
-        [0,'#ef4444'],
-        [50,'#f59e0b'],
-        [100,'#10b981']
-      ]);
-      $("gScoreTxt").textContent =
-        S.scoreDay>=80 ? '🟢 Favorables'
-        : S.scoreDay>=50 ? '🟠 Mitigées'
-        : '🔴 Défavorable';
-
-      // Densité RESTAURÉE : vert -> jaune/orange -> rouge
-      gaugeHalfGradient('gRho', S.ratioMean, 0.90, 1.08, [
-        [0,'#10b981'],
-        [50,'#f59e0b'],
-        [100,'#ef4444']
-      ]);
-      let rhoLabel='—';
-      if(S.ratioMean!=null){
-        if(S.ratioMean<0.99) rhoLabel='🟢 Air plutôt léger';
-        else if(S.ratioMean<=1.03) rhoLabel='🟠 Densité moyenne';
-        else rhoLabel='🔴 Air riche';
-      }
-      $("gRhoTxt").textContent=rhoLabel;
-
-      if(S.events && S.events.length){
-        $("dayMsg").textContent=(effectiveMode==='now'?'Phénomènes actuels : ':'Phénomènes attendus : ')+S.events.join(', ');
-      }else{
-        $("dayMsg").textContent=(effectiveMode==='now'?'Conditions actuelles calmes.':'Aucun phénomène notable.');
-      }
-
+      renderGaugesFromSummary(S, effectiveMode, false);
       renderLamps(S);
+
       st.innerHTML=`✅ Données chargées pour ${effectiveMode==='now'?'maintenant':dateISO} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
 
       if(mode==='now' && effectiveMode==='day') setSingleModePill('day');
@@ -423,22 +444,42 @@
     }
   }
 
-  // recherche
-  async function searchCityInto(inputId, resultsId, onPick){
-    const q=($(inputId).value||'').trim();
-    const cont=$(resultsId); cont.innerHTML='';
+  // recherche (avec auto-sélection possible du 1er résultat)
+  async function searchCityInto(inputId, resultsId, onPick, autoPickFirst=false){
+    const inputEl=$(inputId);
+    const q=(inputEl?.value||'').trim();
+    const cont=$(resultsId); if(cont) cont.innerHTML='';
     const holder=(resultsId==='results') ? $("status") : $("statusRoute");
-    if(!q){ if(holder) holder.textContent='Saisissez une ville.'; return; }
+    if(!q){
+      if(holder) holder.textContent='Saisissez une ville.';
+      return;
+    }
     if(holder) holder.textContent='Recherche…';
     try{
       const u=new URL('https://geocoding-api.open-meteo.com/v1/search');
-      u.searchParams.set('name',q); u.searchParams.set('count',8); u.searchParams.set('language','fr'); u.searchParams.set('format','json');
-      const r=await fetch(u.toString()); if(!r.ok) throw new Error('HTTP '+r.status);
-      const d=await r.json(); const res=d.results||[];
-      if(res.length===0){ if(holder) holder.innerHTML='<span style="color:#ef4444">Aucun résultat.</span>'; return; }
+      u.searchParams.set('name',q);
+      u.searchParams.set('count',8);
+      u.searchParams.set('language','fr');
+      u.searchParams.set('format','json');
+      const r=await fetch(u.toString());
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      const res=d.results||[];
+      if(res.length===0){
+        if(holder) holder.innerHTML='<span style="color:#ef4444">Aucun résultat.</span>';
+        return;
+      }
       if(holder) holder.textContent=`Résultats : ${res.length}`;
+
+      if(autoPickFirst){
+        onPick(res[0]);
+        return;
+      }
+
       for(const v of res){
-        const b=document.createElement('button'); b.className='cityItem';
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='cityItem';
         const admin=v.admin1?`, ${v.admin1}`:'';
         b.innerHTML=`<span>${v.name}${admin} — ${v.country_code}</span><span style="font-family:monospace;color:#cbd5e1">${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)}</span>`;
         b.onclick=()=>{ onPick(v); cont.innerHTML=''; };
@@ -507,7 +548,10 @@
 
   async function evaluateRoute(date){
     const info=$("statusRoute");
-    if(!A||!B){ info.innerHTML='<span style="color:#ef4444">Choisissez départ et arrivée.</span>'; return; }
+    if(!A||!B){
+      info.innerHTML='<span style="color:#ef4444">Choisissez départ et arrivée.</span>';
+      return;
+    }
     info.textContent='Calcul itinéraire…';
     try{
       const mode=currentRouteMode;
@@ -524,52 +568,36 @@
         SB=computeDaySummaryFromHourly(db.hourly||{},date);
         label=date+' (itinéraire)';
       }
-      if(!SA||!SB){ info.innerHTML='<span style="color:#ef4444">Données indisponibles.</span>'; return; }
+      if(!SA||!SB){
+        info.innerHTML='<span style="color:#ef4444">Données indisponibles.</span>';
+        return;
+      }
 
       const rhoAvg=avg2(SA.rhoMean,SB.rhoMean);
       const ratioAvg=rhoAvg?rhoAvg/1.225:null;
       const scoreAvg=avg2(SA.scoreDay,SB.scoreDay);
 
-      // mêmes jauges que ville
-      gaugeHalfGradient('gScore', scoreAvg, 0, 100, [
-        [0,'#ef4444'],
-        [50,'#f59e0b'],
-        [100,'#10b981']
-      ]);
-      $("gScoreTxt").textContent = (scoreAvg>=80? '🟢 Favorables (itinéraire)' : (scoreAvg>=50? '🟠 Mitigées (itinéraire)' : '🔴 Défavorable (itinéraire)'));
-
-      gaugeHalfGradient('gRho', ratioAvg, 0.90, 1.08, [
-        [0,'#10b981'],
-        [50,'#f59e0b'],
-        [100,'#ef4444']
-      ]);
-      let rhoLabel='—';
-      if(ratioAvg!=null){
-        if(ratioAvg<0.99) rhoLabel='🟢 Air plutôt léger';
-        else if(ratioAvg<=1.03) rhoLabel='🟠 Densité moyenne';
-        else rhoLabel='🔴 Air riche';
-      }
-      $("gRhoTxt").textContent=rhoLabel;
-
-      const ev = Array.from(new Set([...(SA.events||[]), ...(SB.events||[])]));
-      $("dayMsg").textContent = ev.length ? `Phénomènes sur l’itinéraire : ${ev.join(', ')}` : 'Aucun phénomène notable (itinéraire).';
-
-      renderLamps({
+      const Sagg={
+        scoreDay:scoreAvg,
+        ratioMean:ratioAvg,
+        events:Array.from(new Set([...(SA.events||[]), ...(SB.events||[])])),
         Tmean:avg2(SA.Tmean,SB.Tmean),
         RHmean:avg2(SA.RHmean,SB.RHmean),
-        Rmax:avg2(SA.Rmax,SB.Rmax),
         Wmax:avg2(SA.Wmax,SB.Wmax),
         Gmax:avg2(SA.Gmax,SB.Gmax),
+        Rmax:avg2(SA.Rmax,SB.Rmax),
         Vmin:avg2(SA.Vmin,SB.Vmin)
-      });
+      };
 
-      const avgWind=Math.round(avg2(SA.Wmax,SB.Wmax) || 0);
-      const avgGust=Math.round(avg2(SA.Gmax,SB.Gmax) || 0);
-      const avgPrec=avg2(SA.Rmax,SB.Rmax);
-      $("kT").textContent=fmt(avg2(SA.Tmean,SB.Tmean)," °C");
-      $("kRH").textContent=fmt(avg2(SA.RHmean,SB.RHmean)," %");
+      renderGaugesFromSummary(Sagg, effectiveMode, true);
+      renderLamps(Sagg);
+
+      const avgWind=Math.round(Sagg.Wmax || 0);
+      const avgGust=Math.round(Sagg.Gmax || 0);
+      $("kT").textContent=fmt(Sagg.Tmean," °C");
+      $("kRH").textContent=fmt(Sagg.RHmean," %");
       $("kWind").textContent=`${avgWind} km/h • raf ${avgGust} km/h`;
-      $("kPrec").textContent=(avgPrec!=null ? `${avgPrec.toFixed(2)} mm` : '—');
+      $("kPrec").textContent=(Sagg.Rmax!=null ? `${Sagg.Rmax.toFixed(2)} mm` : '—');
       $("kTs").textContent=label;
 
       info.innerHTML=`✅ Itinéraire évalué pour ${label}`;
@@ -594,11 +622,26 @@
   $("date").addEventListener('change', autoEvaluate);
   $("dateRoute").addEventListener('change', autoEvaluate);
 
-  $("btnPrimary").addEventListener('click', ()=>{
+  $("btnPrimary").addEventListener('click', async ()=>{
     if(MODE==='single'){
-      const la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
+      let la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
       const d=$("date").value || todayISO();
-      if(isNaN(la)||isNaN(lo)){ $("status").textContent='Renseignez lat/lon ou choisissez une ville.'; return; }
+
+      // Si pas de lat/lon mais une ville saisie, on cherche automatiquement la 1ère correspondance
+      if((isNaN(la)||isNaN(lo)) && $("city").value.trim()){
+        await searchCityInto('city','results', v=>{
+          $("city").value=v.name;
+          $("lat").value=v.latitude.toFixed(4);
+          $("lon").value=v.longitude.toFixed(4);
+          la=v.latitude;
+          lo=v.longitude;
+        }, true);
+      }
+
+      if(isNaN(la)||isNaN(lo)){
+        $("status").textContent='Renseignez une ville (ou lat/lon).';
+        return;
+      }
       loadCity(la,lo,d,currentSingleMode);
     }else{
       const d=$("dateRoute").value || todayISO();
